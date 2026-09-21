@@ -40,6 +40,68 @@ export const COL = {
   documentId: 4,
   persons: 11,          // V1Persons — plain semicolon-separated names
   enhancedPersons: 12,  // V2EnhancedPersons — name,offset pairs
+  extras: 26,           // V2ExtrasXML — last of the 27, and where the headline lives
+}
+
+/* ------------------------------------------------------------------ *
+ * What the story actually said
+ * ------------------------------------------------------------------ */
+
+const ENTITIES = {
+  amp: '&', lt: '<', gt: '>', quot: '"', apos: "'", nbsp: ' ',
+  ndash: '–', mdash: '—', lsquo: '‘', rsquo: '’', ldquo: '“', rdquo: '”', hellip: '…',
+}
+
+/**
+ * GDELT escapes every non-ASCII character in a title as an HTML entity, so a
+ * headline arrives as "Beyonc&#233;s new album". One pass over all three
+ * forms, because decoding named entities after numeric ones turns a literal
+ * "&amp;#39;" into an apostrophe that was never there.
+ */
+export function decodeEntities(s = '') {
+  return String(s).replace(
+    /&(?:#[xX]([0-9a-fA-F]+)|#(\d+)|([a-zA-Z][a-zA-Z0-9]*));/g,
+    (whole, hex, dec, name) => {
+      if (name) return ENTITIES[name.toLowerCase()] ?? whole
+      const code = hex ? parseInt(hex, 16) : parseInt(dec, 10)
+      if (!Number.isFinite(code) || code < 1 || code > 0x10ffff) return whole
+      try { return String.fromCodePoint(code) } catch { return whole }
+    },
+  )
+}
+
+/**
+ * The headline, out of the file we already have.
+ *
+ * GKG has carried `<PAGE_TITLE>` inside the extras XML since 2019, and this
+ * adapter was throwing the whole column away — so every driver went out with
+ * `title: null` hardcoded, and the chart could name the outlet that covered
+ * somebody but never what was written. No extra request: it is the same row
+ * the mention was counted from, so the headline always belongs to the article
+ * that actually moved the number.
+ *
+ * Falls back to the last column when a row is short, since extras is last.
+ */
+export function pageTitle(cols = []) {
+  const extras = cols[COL.extras] ?? cols[cols.length - 1] ?? ''
+  const m = /<PAGE_TITLE>([\s\S]*?)<\/PAGE_TITLE>/i.exec(extras)
+  if (!m) return null
+  const title = decodeEntities(m[1]).replace(/\s+/g, ' ').trim()
+  return title || null
+}
+
+/**
+ * When the article was seen, from the row's own timestamp.
+ *
+ * Every driver used to be stamped with the moment the job ran, which made
+ * "when this broke" the same for all of them and equal to whenever the
+ * scheduler last fired. The row carries the window it belongs to; use that.
+ */
+export function rowTime(cols = []) {
+  const m = /^(\d{4})(\d{2})(\d{2})(\d{2})(\d{2})(\d{2})$/.exec(String(cols[COL.date] || '').trim())
+  if (!m) return null
+  const t = Date.UTC(+m[1], +m[2] - 1, +m[3], +m[4], +m[5], +m[6])
+  return Number.isFinite(t) ? t : null
 }
 
 /**
@@ -129,7 +191,7 @@ export function ingestRows(rows, celebrities, { index = buildPersonIndex(celebri
       for (const c of index.get(person) || []) {
         if (!into.has(c.id)) into.set(c.id, { docs: new Map(), domains: new Set() })
         const bucket = into.get(c.id)
-        if (url && !bucket.docs.has(url)) bucket.docs.set(url, { domain, url })
+        if (url && !bucket.docs.has(url)) bucket.docs.set(url, { domain, url, title: pageTitle(cols), seenAt: rowTime(cols) })
         if (domain) bucket.domains.add(domain)
       }
     }
@@ -156,10 +218,28 @@ export function measure(bucket, { now = Date.now() } = {}) {
     prominence: Number(prominence.toFixed(3)),
     largestCluster: Math.max(0, ...[...byDomain.values()].map((v) => v.length)),
     matchRate: 1,
-    drivers: docs.slice(0, 10).map((d) => ({
-      title: null, url: d.url, domain: d.domain, publishers: 1,
-      firstSeen: new Date(now).toISOString(),
-    })),
+    /*
+     * The ten that best explain the number, not the first ten parsed.
+     *
+     * An article we can name beats one we cannot, and a masthead beats an
+     * aggregator, because this list is what the chart reads from when it has
+     * to say why somebody moved. Ties keep the order they arrived in, so the
+     * same window always produces the same drivers.
+     */
+    drivers: [...docs]
+      .sort((a, b) => (
+        (b.title ? 1 : 0) - (a.title ? 1 : 0)
+        || TIER_WEIGHT[tierOf(b.domain)] - TIER_WEIGHT[tierOf(a.domain)]
+      ))
+      .slice(0, 10)
+      .map((d) => ({
+        title: d.title ?? null,
+        url: d.url,
+        domain: d.domain,
+        publishers: 1,
+        // The row's own window, not the moment the scheduler happened to run.
+        firstSeen: new Date(d.seenAt ?? now).toISOString(),
+      })),
   }
 }
 

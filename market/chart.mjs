@@ -278,19 +278,42 @@ export function daysWithData(rollups = {}, range = {}) {
  * progress exists only as intraday points. The live chart needs it or it is
  * always a day behind — and a "this week so far" that ignores today is not
  * worth refreshing.
+ *
+ * It must carry the SAME FIELDS as a completed rollup day, not just the
+ * score. This used to return the OHLC and nothing else, which quietly
+ * disabled the entire explanation on the only chart most people ever see.
+ * The evidence record reads `mentions`, `sources` and `wikipediaViews` off
+ * each day to work out what moved; every day of the week in progress is a
+ * partial day; so every driver came back `now: null`, nothing could be
+ * marked as having moved, corroboration was always 0 and every name on the
+ * live chart was flagged `thin`. The chart could say a name had risen
+ * fourteen places and then explain precisely nothing about why — which is
+ * exactly what it did.
+ *
+ * Aggregated the same way `writeRollupDay` aggregates a finished day, so a
+ * partial day and a complete one are read identically downstream.
  */
 export function partialDay(points = [], day) {
-  const scores = points
-    .filter((p) => String(p?.timestamp || '').slice(0, 10) === day)
-    .map((p) => p.gossipScore)
-    .filter(Number.isFinite)
+  const today = points.filter((p) => String(p?.timestamp || '').slice(0, 10) === day)
+  const scores = today.map((p) => p.gossipScore).filter(Number.isFinite)
   if (!scores.length) return null
+
+  // Math.min of an empty list is Infinity, which is not a rank.
+  const ranks = today.map((p) => p.rank).filter(Number.isFinite)
+
   return {
     day,
     open: scores[0],
     close: scores[scores.length - 1],
     high: Math.max(...scores),
     low: Math.min(...scores),
+    /* The three the drivers are made of. */
+    mentions: Math.round(today.reduce((a, p) => a + (p.mentionCount || 0), 0) / today.length),
+    wikipediaViews: today[today.length - 1]?.wikipediaViews ?? null,
+    // The widest the day got, not its average — same rule as a finished day.
+    sources: Math.max(0, ...today.map((p) => p.uniqueSourceCount || 0)),
+    countries: Math.max(0, ...today.map((p) => p.uniqueCountryCount || 0)),
+    bestRank: ranks.length ? Math.min(...ranks) : null,
     samples: scores.length,
     partial: true,
   }

@@ -410,6 +410,46 @@ test('a day with no snapshots yet is no day, not a zero', () => {
   assert.equal(partialDay([{ timestamp: '2026-09-22T12:00:00Z', gossipScore: 5 }], '2026-09-23'), null)
 })
 
+test("today's day carries what the explanation is made of, not just the score", () => {
+  /*
+   * The whole reason the live chart could not say why anybody had moved.
+   * Every day of the week in progress is a partial day, the evidence record
+   * reads mentions, sources and wikipediaViews off each day, and this used to
+   * return OHLC alone — so every driver was `now: null`, nothing could have
+   * "moved", corroboration was always zero and everyone was flagged thin. A
+   * chart that announces a fourteen-place climb and explains nothing.
+   */
+  const points = [
+    { timestamp: '2026-09-23T00:00:00Z', gossipScore: 40, mentionCount: 10, uniqueSourceCount: 3, uniqueCountryCount: 2, wikipediaViews: 900, rank: 12 },
+    { timestamp: '2026-09-23T12:00:00Z', gossipScore: 70, mentionCount: 30, uniqueSourceCount: 9, uniqueCountryCount: 5, wikipediaViews: 1400, rank: 4 },
+    { timestamp: '2026-09-23T18:00:00Z', gossipScore: 55, mentionCount: 20, uniqueSourceCount: 6, uniqueCountryCount: 3, wikipediaViews: 1100, rank: 7 },
+  ]
+  const d = partialDay(points, '2026-09-23')
+  assert.equal(d.mentions, 20, 'the average across the day, as a finished day does it')
+  assert.equal(d.sources, 9, 'the widest it got, not the average')
+  assert.equal(d.countries, 5)
+  assert.equal(d.wikipediaViews, 1100, 'the latest reading, not a mean of a cumulative counter')
+  assert.equal(d.bestRank, 4)
+})
+
+test('a partial day is shaped like a finished one, field for field', () => {
+  // Read identically downstream, or the evidence record silently sees holes.
+  const points = [{ timestamp: '2026-09-23T09:00:00Z', gossipScore: 50, mentionCount: 8, uniqueSourceCount: 4, uniqueCountryCount: 1, wikipediaViews: 700, rank: 9 }]
+  const d = partialDay(points, '2026-09-23')
+  for (const k of ['day', 'open', 'close', 'high', 'low', 'mentions', 'wikipediaViews', 'sources', 'countries', 'bestRank', 'samples']) {
+    assert.ok(k in d, `a finished day has ${k}; a partial one must too`)
+  }
+})
+
+test('snapshots with nothing but a score still make a usable day', () => {
+  // Older intraday files predate these fields. A hole is a null, not a crash.
+  const d = partialDay([{ timestamp: '2026-09-23T09:00:00Z', gossipScore: 50 }], '2026-09-23')
+  assert.equal(d.close, 50)
+  assert.equal(d.mentions, 0)
+  assert.equal(d.wikipediaViews, null)
+  assert.equal(d.bestRank, null, 'no rank is null, never Infinity')
+})
+
 test('the live chart ranks the week in progress against last week', () => {
   // Wednesday of week 39. Week 38 is the published edition.
   const now = at('2026-09-23T18:00:00Z')

@@ -177,3 +177,41 @@ test('the story is supporting evidence, not the explanation', () => {
   assert.equal(none.evidence.story, null)
   assert.ok(none.drivers.some((x) => x.moved), 'the numbers stand without a story behind them')
 })
+
+/* ================================================================== *
+ * What was actually written
+ * ================================================================== */
+
+test('the record carries the coverage the number was counted from', () => {
+  /*
+   * The gap that made the chart unexplainable: `story` is matched from our
+   * own feed after the fact, and the live chart is built without a feed, so
+   * it was always null. These are the articles themselves.
+   */
+  const rec = buildEvidence({
+    rank: 1, lastWeek: 15, status: 'up',
+    row: {
+      mentions: 140,
+      drivers: [
+        { title: 'Mahomes named player of the week', domain: 'apnews.com', url: 'https://apnews.com/1', firstSeen: '2026-09-21T21:45:00.000Z' },
+        { title: null, domain: 'nowhere.test', url: 'https://nowhere.test/2', firstSeen: '2026-09-21T22:00:00.000Z' },
+        { title: 'Chiefs quarterback signs extension', domain: 'espn.com', url: 'https://espn.com/3', firstSeen: '2026-09-21T22:15:00.000Z' },
+        { title: 'A fourth one', domain: 'bbc.co.uk', url: 'https://bbc.co.uk/4', firstSeen: '2026-09-21T22:30:00.000Z' },
+      ],
+    },
+  })
+  assert.equal(rec.evidence.coverage.length, 3, 'three is enough to explain a week')
+  assert.equal(rec.evidence.coverage[0].title, 'Mahomes named player of the week')
+  assert.equal(rec.evidence.coverage[0].domain, 'apnews.com')
+  assert.equal(rec.evidence.coverage[0].at, '2026-09-21T21:45:00.000Z')
+})
+
+test('coverage with no drivers is an empty list, never null', () => {
+  // The UI maps over it. A null here is a crash on a quiet name.
+  for (const row of [{}, { drivers: null }, { drivers: [] }, { drivers: [{ title: 'no url' }] }]) {
+    const rec = buildEvidence({ rank: 40, row })
+    assert.ok(Array.isArray(rec.evidence.coverage), JSON.stringify(row))
+  }
+  assert.equal(buildEvidence({ rank: 40, row: { drivers: [{ title: 'no url' }] } }).evidence.coverage.length, 0,
+    'an article with no link is not something a reader can be sent to')
+})

@@ -296,6 +296,28 @@ export function buildEvidence({
       // here so a reader can go and read the thing; it is not what the
       // numbers are derived from, and the card leads with the numbers.
       story: story ? { id: story.id, headline: story.headline, href: `/story/${story.id}`, outlets: story.outlets ?? null } : null,
+      /*
+       * What was actually written about them, and where.
+       *
+       * `story` is a piece from our own feed, matched to the name after the
+       * fact — and on the live chart it is always null, because the live
+       * chart is built without a feed at all. That left the record able to
+       * say a name's coverage had tripled and unable to say one word about
+       * what the coverage was.
+       *
+       * These are the articles the mentions were counted from, carrying the
+       * headline GKG had all along. Titled ones first, because a nameless
+       * URL explains nothing; the timestamps are the articles' own.
+       */
+      coverage: (row.drivers || [])
+        .filter((d) => d?.url)
+        .slice(0, 3)
+        .map((d) => ({
+          title: d.title || null,
+          domain: d.domain || null,
+          url: d.url,
+          at: d.firstSeen || null,
+        })),
     },
   }
 }

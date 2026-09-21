@@ -1,7 +1,7 @@
 import { test } from 'node:test'
 import assert from 'node:assert/strict'
 import { zipSync } from 'fflate'
-import { COL, personsOf, buildPersonIndex, ingestRows, measure, latestFiles, collect, previousWindowUrl } from './gkg.mjs'
+import { COL, personsOf, buildPersonIndex, ingestRows, measure, latestFiles, collect, previousWindowUrl, pageTitle, decodeEntities, rowTime } from './gkg.mjs'
 import { byId, activeRoster } from '../roster.mjs'
 
 const swift = byId('taylor-swift')
@@ -11,15 +11,49 @@ const zendaya = byId('zendaya')
 const NOW = Date.parse('2026-09-17T21:45:00Z')
 
 /** A GKG row: 27 tab-separated columns, with the ones we read filled in. */
-function row({ url = 'https://apnews.com/a', source = 'apnews.com', persons = '', enhanced = '' } = {}) {
+function row({ url = 'https://apnews.com/a', source = 'apnews.com', persons = '', enhanced = '', title = null, date = '20260917214500' } = {}) {
   const cols = new Array(27).fill('')
-  cols[COL.date] = '20260917214500'
+  cols[COL.date] = date
   cols[COL.sourceName] = source
   cols[COL.documentId] = url
   cols[COL.persons] = persons
   cols[COL.enhancedPersons] = enhanced
+  if (title !== null) cols[COL.extras] = `<PAGE_TITLE>${title}</PAGE_TITLE>`
   return cols.join('\t')
 }
+
+/* ---------------- what the story said ---------------- */
+
+test('the headline comes out of the extras column we were throwing away', () => {
+  const cols = row({ title: 'Zendaya cast in the Dune prequel' }).split('\t')
+  assert.equal(pageTitle(cols), 'Zendaya cast in the Dune prequel')
+})
+
+test('a headline with no extras is null, not an empty string', () => {
+  assert.equal(pageTitle(row().split('\t')), null)
+  assert.equal(pageTitle(row({ title: '   ' }).split('\t')), null)
+  assert.equal(pageTitle([]), null)
+})
+
+test('GDELT escapes every non-ASCII character, so the title must be decoded', () => {
+  // Left as-is this reads "Beyonc&#233;s Renaissance" on the front page.
+  assert.equal(decodeEntities('Beyonc&#233;s &amp; Jay-Z'), 'Beyoncés & Jay-Z')
+  assert.equal(decodeEntities('Chalamet&#x2019;s year'), 'Chalamet\u2019s year')
+  assert.equal(decodeEntities('caf&eacute; &mdash; open'), 'caf&eacute; — open')
+})
+
+test('decoding happens once, so an escaped entity stays escaped', () => {
+  // "&amp;#39;" is a literal ampersand-hash-39, not an apostrophe. Decoding
+  // named entities and then numeric ones would invent a character.
+  assert.equal(decodeEntities('AT&amp;#39;T'), 'AT&#39;T')
+  assert.equal(decodeEntities('&#999999999;'), '&#999999999;', 'nonsense code points are left alone')
+})
+
+test('an article is stamped with its own window, not with whenever the job ran', () => {
+  assert.equal(rowTime(row({ date: '20260917214500' }).split('\t')), Date.UTC(2026, 8, 17, 21, 45, 0))
+  assert.equal(rowTime(row({ date: 'rubbish' }).split('\t')), null)
+  assert.equal(rowTime([]), null)
+})
 
 /* ---------------- reading the file ---------------- */
 
@@ -268,4 +302,47 @@ test('a window already counted is reported as a repeat, never re-ingested', asyn
   assert.equal(r.ok, true, 'a repeat is a known-empty tick, not a failure')
   assert.deepEqual(r.signals, [], 'nothing is counted a second time')
   assert.equal(downloads, 1, 'the file is fetched but never ingested twice')
+})
+
+
+/* ---------------- the drivers explain something ---------------- */
+
+test('drivers carry the headline and the article\u2019s own timestamp', () => {
+  const zendaya = byId('zendaya')
+  const { into } = ingestRows([
+    row({ persons: 'Zendaya', url: 'https://apnews.com/1', source: 'apnews.com', title: 'Zendaya cast in the Dune prequel', date: '20260917214500' }),
+  ], [zendaya])
+  const [d] = measure(into.get('zendaya'), { now: Date.parse('2026-09-18T09:00:00Z') }).drivers
+  assert.equal(d.title, 'Zendaya cast in the Dune prequel')
+  assert.equal(d.firstSeen, '2026-09-17T21:45:00.000Z', 'the window it came from, not the run')
+})
+
+test('an article we can name is offered before one we cannot', () => {
+  /*
+   * This list is what the chart reads from when it has to say why somebody
+   * moved. A nameless URL explains nothing, so it must not be first.
+   */
+  const zendaya = byId('zendaya')
+  const { into } = ingestRows([
+    row({ persons: 'Zendaya', url: 'https://nowhere.test/1', source: 'nowhere.test' }),
+    row({ persons: 'Zendaya', url: 'https://apnews.com/2', source: 'apnews.com', title: 'Zendaya takes the lead' }),
+  ], [zendaya])
+  const { drivers } = measure(into.get('zendaya'))
+  assert.equal(drivers[0].title, 'Zendaya takes the lead')
+  assert.equal(drivers.length, 2, 'the nameless one is kept, just not led on')
+})
+
+test('a row too short to have extras still measures, with no headline', () => {
+  // Older rows and malformed ones must not take the window down with them:
+  // just enough columns to carry a person, and nothing after.
+  const zendaya = byId('zendaya')
+  const short = new Array(COL.persons + 1).fill('')
+  short[COL.date] = '20260917214500'
+  short[COL.sourceName] = 'a.test'
+  short[COL.documentId] = 'https://a.test/1'
+  short[COL.persons] = 'Zendaya'
+  const { into } = ingestRows([short.join('\t')], [zendaya])
+  const [d] = measure(into.get('zendaya')).drivers
+  assert.equal(d.title, null, 'no extras column is no headline, not a crash')
+  assert.equal(d.firstSeen, '2026-09-17T21:45:00.000Z', 'the date column is still there')
 })
