@@ -1,0 +1,6 @@
+/* Genie brand tokens — shared by every Genie app. */
+:root{
+  --genie-gold:#FFC145; --genie-pink:#FF5FA2; --genie-violet:#A77BFF; --genie-ink:#5B2BD6;
+  --genie-gradient:linear-gradient(95deg,#FFC145 0%,#FF5FA2 52%,#A77BFF 100%);
+  --genie-descriptor:"IBM Plex Mono",ui-monospace,monospace;
+}

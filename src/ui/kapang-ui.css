@@ -1,0 +1,154 @@
+/* ------------------------------------------------------------------
+   Kapang broadcast furniture: the logo lockup, the graphic wipe and the
+   lower third. Copied from El Nino Watch (treatment B) so both apps read
+   as one channel. Component markup lives beside this file.
+   ------------------------------------------------------------------ */
+
+/* ---------------- logo lockup ---------------- */
+.k-lockup{display:flex;align-items:center;gap:9px;flex:none}
+.k-lockup .pw{font-family:var(--mono);font-size:9px;letter-spacing:.16em;
+  text-transform:uppercase;color:var(--ink-faint)}
+.k-lockup img{height:24px;width:auto;display:block}
+.k-lockup.lg img{height:30px}
+.k-lockup.sm img{height:19px}
+.k-watchline{font-family:var(--mono);font-size:11px;letter-spacing:.13em;
+  text-transform:uppercase;color:var(--ink-dim)}
+.k-watchline b{color:var(--kapang);font-weight:600}
+
+/* ---------------- the graphic wipe ----------------
+   A branded panel sweeps across, holds while the next view loads behind
+   it, and sweeps away to reveal it. The load happens behind the graphic,
+   so there is nothing to see loading. */
+.k-wipe{position:absolute;inset:0;z-index:30;overflow:hidden;pointer-events:none}
+.k-wipe-panel{position:absolute;top:-6%;bottom:-6%;left:-25%;right:-25%;
+  background:linear-gradient(103deg,#03101A 0%,#082234 46%,#061826 74%,#03101A 100%);
+  border-right:3px solid var(--kapang);
+  box-shadow:-18px 0 70px rgba(0,0,0,.72), inset 0 0 140px rgba(21,158,220,.07);
+  transform:translateX(-128%) skewX(-11deg);will-change:transform}
+/* A hairline of brand colour runs just ahead of the panel edge. */
+.k-wipe-panel::after{content:"";position:absolute;top:0;bottom:0;right:-14px;width:11px;
+  background:linear-gradient(90deg,rgba(21,158,220,.55),rgba(21,158,220,0))}
+/* Graphic furniture rather than a flat fill: a faint radar sweep off to the
+   right and a fine diagonal rule across the panel. Both drawn in CSS, so the
+   wipe costs nothing to load — which matters, given its job is to cover a load. */
+.k-wipe-panel::before{content:"";position:absolute;inset:0;pointer-events:none;
+  background:
+    repeating-linear-gradient(101deg,rgba(140,163,184,.05) 0 1px,transparent 1px 34px),
+    radial-gradient(circle at 76% 50%,transparent 0 176px,rgba(21,158,220,.13) 176px 178px,transparent 178px),
+    radial-gradient(circle at 76% 50%,transparent 0 258px,rgba(21,158,220,.10) 258px 260px,transparent 260px),
+    radial-gradient(circle at 76% 50%,transparent 0 340px,rgba(21,158,220,.07) 340px 342px,transparent 342px),
+    conic-gradient(from 200deg at 76% 50%,rgba(21,158,220,.16),transparent 62deg)}
+.k-wipe.in .k-wipe-panel{animation:kWipeIn .44s cubic-bezier(.76,0,.24,1) forwards}
+.k-wipe.out .k-wipe-panel{animation:kWipeOut .5s cubic-bezier(.66,0,.3,1) forwards}
+@keyframes kWipeIn{from{transform:translateX(-128%) skewX(-11deg)}
+  to{transform:translateX(0) skewX(-11deg)}}
+@keyframes kWipeOut{from{transform:translateX(0) skewX(-11deg)}
+  to{transform:translateX(128%) skewX(-11deg)}}
+
+.k-wipe-body{position:absolute;top:0;bottom:0;left:16.7%;right:16.7%;
+  display:flex;flex-direction:column;justify-content:center;
+  transform:skewX(11deg);padding:0 clamp(40px,6vw,96px);gap:4px}
+.k-wipe-body > *{opacity:0;transform:translateY(14px)}
+.k-wipe.in .k-wipe-body > *{animation:kWipeText .4s cubic-bezier(.2,.7,.3,1) forwards}
+.k-wipe.in .k-wipe-body > *:nth-child(1){animation-delay:.16s}
+.k-wipe.in .k-wipe-body > *:nth-child(2){animation-delay:.22s}
+.k-wipe.in .k-wipe-body > *:nth-child(3){animation-delay:.26s}
+.k-wipe.in .k-wipe-body > *:nth-child(4){animation-delay:.32s}
+.k-wipe.in .k-wipe-body > *:nth-child(5){animation-delay:.38s}
+.k-wipe.in .k-wipe-body > *:nth-child(6){animation-delay:.44s}
+.k-wipe.in .k-wipe-body > *:nth-child(7){animation-delay:.52s}
+.k-wipe.out .k-wipe-body > *{animation:kWipeTextOut .22s ease forwards}
+@keyframes kWipeText{to{opacity:1;transform:none}}
+@keyframes kWipeTextOut{to{opacity:0;transform:translateY(-10px)}}
+
+.k-wipe-brand{display:flex;align-items:center;gap:12px;margin-bottom:16px}
+.k-wipe-brand img{height:26px;width:auto;display:block}
+.k-wipe-mark{font-family:var(--display);font-size:22px;letter-spacing:.1em;color:#fff;line-height:1;
+  padding-left:12px;border-left:2px solid var(--kapang)}
+.k-wipe-cue{font-family:var(--mono);font-size:11px;letter-spacing:.28em;text-transform:uppercase;
+  color:var(--warm)}
+.k-wipe-place{font-family:var(--display);font-size:clamp(46px,7.5vw,104px);line-height:.9;
+  letter-spacing:.02em;color:#fff;overflow-wrap:anywhere}
+.k-wipe-sub{font-family:var(--mono);font-size:clamp(12px,1.5vw,17px);letter-spacing:.16em;
+  text-transform:uppercase;color:var(--kapang);overflow-wrap:anywhere}
+.k-wipe-date{font-family:var(--mono);font-size:12px;letter-spacing:.14em;text-transform:uppercase;
+  color:var(--ink-faint);margin-top:18px;padding-top:12px;border-top:1px solid rgba(140,163,184,.25);
+  align-self:flex-start}
+@media(max-width:760px){
+  .k-wipe-body{padding:0 18px;gap:2px}
+  .k-wipe-brand{margin-bottom:10px}
+  .k-wipe-brand img{height:20px}
+  .k-wipe-mark{font-size:17px}
+  .k-wipe-place{font-size:clamp(34px,11vw,54px)}
+  .k-wipe-date{margin-top:12px;padding-top:9px;font-size:10px}
+}
+@media (prefers-reduced-motion:reduce){
+  .k-wipe-panel{transition:none}
+  .k-wipe.in .k-wipe-panel,.k-wipe.out .k-wipe-panel{animation-duration:.01s}
+}
+
+/* ---------------- the lower third (treatment B) ----------------
+   Story on the left, figures on the right. A lower third is a wide, shallow
+   space; stacking everything down it is what overflows the bar. The copy is
+   ONE bounded box on one type scale (--k-tscale) that fitLowerThird turns
+   down until the whole column fits — never an ellipsis mid-sentence. */
+.k-l3{display:grid;grid-template-columns:minmax(0,1fr) minmax(0,auto);
+  grid-template-rows:minmax(0,1fr);align-items:center;column-gap:32px;
+  background:linear-gradient(0deg,rgba(4,10,17,.97) 0%,rgba(4,10,17,.9) 100%);
+  border-top:2px solid var(--kapang);overflow:hidden;pointer-events:auto;
+  padding:14px clamp(20px,4vw,54px)}
+.k-l3-copy{grid-column:1;grid-row:1;min-width:0;min-height:0;overflow:hidden;--k-tscale:1}
+.k-l3-eyebrow{display:flex;flex-wrap:wrap;align-items:center;gap:10px 14px;margin-bottom:9px;overflow:hidden}
+.k-tag{font-family:var(--mono);font-size:10.5px;letter-spacing:.18em;text-transform:uppercase;
+  color:var(--ink-dim);border:1px solid rgba(140,163,184,.4);padding:4px 9px}
+.k-tag.live{color:var(--warm);border-color:rgba(255,107,53,.5);display:flex;align-items:center;gap:7px}
+.k-tag .dot{width:7px;height:7px;border-radius:50%;background:currentColor;
+  animation:kPulse 2.6s ease-out infinite}
+@keyframes kPulse{0%{box-shadow:0 0 0 0 rgba(255,107,53,.55)}
+  70%{box-shadow:0 0 0 9px rgba(255,107,53,0)}100%{box-shadow:0 0 0 0 rgba(255,107,53,0)}}
+.k-l3-kicker{font-family:var(--display);font-size:calc(clamp(25px,3vw,46px) * var(--k-tscale));
+  line-height:.93;letter-spacing:.012em;margin:0;color:#fff;min-width:0;white-space:normal;
+  display:-webkit-box;-webkit-line-clamp:3;-webkit-box-orient:vertical;overflow:hidden}
+.k-l3-place{font-family:var(--mono);font-size:calc(clamp(12px,1.3vw,16px) * var(--k-tscale));
+  letter-spacing:.1em;text-transform:uppercase;color:var(--warm);margin:5px 0 0;
+  overflow:hidden;text-overflow:ellipsis;white-space:nowrap}
+.k-l3-line{font-size:calc(clamp(13px,1.15vw,17px) * var(--k-tscale));line-height:1.45;
+  margin:7px 0 0;color:#DCE7F0;max-width:none;min-width:0;overflow-wrap:anywhere;
+  display:-webkit-box;-webkit-line-clamp:4;-webkit-box-orient:vertical;overflow:hidden}
+.k-l3-stats{grid-column:2;grid-row:1;display:flex;flex-direction:column;align-items:flex-start;
+  flex-wrap:nowrap;gap:9px;min-height:0;min-width:0;max-width:min(44vw,560px)}
+.k-stat{background:rgba(255,255,255,.035);border:1px solid rgba(140,163,184,.28);
+  padding:8px 12px;min-width:118px}
+.k-stat .k{font-family:var(--mono);font-size:9.5px;letter-spacing:.15em;text-transform:uppercase;
+  color:var(--ink-faint);margin-bottom:5px}
+.k-stat .v{font-family:var(--mono);font-size:19px;font-weight:600;line-height:1;
+  font-variant-numeric:tabular-nums;color:#fff}
+.k-stat .v.warm{color:var(--warm)} .k-stat .v.cool{color:var(--cool)}
+.k-stat .n{font-size:10.5px;color:var(--ink-dim);margin-top:5px}
+@media(max-width:760px){
+  .k-l3{grid-template-columns:minmax(0,1fr);grid-template-rows:auto auto;row-gap:12px;padding:12px 16px}
+  .k-l3-stats{grid-column:1;grid-row:2;flex-direction:row;flex-wrap:wrap;max-width:none}
+  .k-stat{flex:1;min-width:96px}
+}
+
+/* ---- the location card's figures ----
+   The panel used to exist only to hide a swap, so it held a place name and
+   moved on. Carrying the ground's record turns it into a graphic somebody is
+   meant to read, which changes what it owes them: a sample size under every
+   number, and room to say what each one is measured against. */
+.k-wipe-note{font-family:var(--mono);font-size:clamp(10px,1.1vw,12.5px);letter-spacing:.14em;
+  text-transform:uppercase;color:var(--ink-faint);margin-top:16px;overflow-wrap:anywhere}
+.k-wipe-facts{display:flex;flex-wrap:wrap;gap:10px clamp(18px,2.4vw,40px);margin-top:12px;
+  padding-top:14px;border-top:1px solid rgba(140,163,184,.25);align-items:flex-start}
+.k-wipe-fact{display:flex;flex-direction:column;gap:2px;min-width:0;flex:1 1 150px;max-width:280px}
+.k-wipe-fact b{font-family:var(--mono);font-weight:600;font-size:clamp(24px,3vw,40px);
+  line-height:1;color:#fff;font-variant-numeric:tabular-nums;letter-spacing:.01em}
+.k-wipe-fact i{font-style:normal;font-family:var(--mono);font-size:clamp(9.5px,1vw,12px);
+  letter-spacing:.14em;text-transform:uppercase;color:var(--kapang);overflow-wrap:anywhere}
+.k-wipe-fact em{font-style:normal;font-family:var(--mono);font-size:clamp(9px,.92vw,11px);
+  line-height:1.4;letter-spacing:.04em;color:var(--ink-faint);overflow-wrap:anywhere}
+@media(max-width:760px){
+  .k-wipe-facts{gap:9px 16px;margin-top:10px;padding-top:11px}
+  .k-wipe-fact{flex:1 1 44%}
+  .k-wipe-note{margin-top:11px}
+}

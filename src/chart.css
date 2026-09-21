@@ -1,0 +1,202 @@
+/* ==================================================================
+   The Genie 100 — one ranking, two states.
+
+   Last week's published edition and this week's running order are the
+   same screen with the same vocabulary, so a reader learns to read the
+   chart once. The state switch at the top is the idea made visible.
+
+   Colour has one job per channel and they never swap:
+     · the bar       score, one hue, no meaning beyond magnitude
+     · the move      direction, always carrying a sign or a word too
+     · gold          furniture and the number one, never data
+
+   The bar hue was validated against the status colours and the dark
+   surface (CVD separation, normal-vision floor, 3:1 contrast) — it has
+   to be tellable apart from up-green, down-red and new-violet at a
+   glance, which the obvious blues were not.
+   ================================================================== */
+
+.ch{
+  --up:#3DDC97; --down:#FF5A6E; --new:#A77BFF; --flat:#8CA3B8;
+  --bar:#5EC8E8;
+  --pad:clamp(16px,4vw,44px);
+  --wrap:1180px;
+  background:var(--abyss);min-height:100vh;padding-bottom:90px;
+}
+.ch *{font-variant-numeric:tabular-nums}
+.ch-head,.ch-one,.ch-summary,.ch-list,.ch-method,.ch-foot,.ch-notyet,.ch-note{
+  max-width:var(--wrap);margin-inline:auto}
+
+/* ---------------- header ---------------- */
+.ch-head{padding:18px var(--pad) 0}
+.ch-head-row{display:flex;align-items:center;gap:16px;flex-wrap:wrap}
+.ch-mark{line-height:0;text-decoration:none;flex:none}
+.ch-title{font-family:var(--display);font-weight:400;font-size:clamp(26px,4vw,40px);
+  line-height:1;margin:0;letter-spacing:.02em;color:#fff}
+.ch-head-right{margin-left:auto;display:flex;align-items:center;gap:12px}
+.ch-link{font-family:var(--mono);font-size:12px;color:var(--ink-dim);text-decoration:none}
+.ch-link:hover{color:var(--genie-gold)}
+
+/* The switch. Two states, side by side, so nobody has to work out why
+   there appear to be two rankings. */
+.ch-states{display:grid;grid-template-columns:1fr 1fr;gap:8px;margin:16px 0 0;max-width:520px}
+.ch-states a{display:flex;flex-direction:column;gap:2px;text-decoration:none;
+  padding:9px 14px;border:1px solid var(--line);border-radius:11px;background:transparent}
+.ch-states a b{font-size:14px;font-weight:600;color:var(--ink-dim)}
+.ch-states a span{font-family:var(--mono);font-size:10px;letter-spacing:.12em;
+  text-transform:uppercase;color:var(--ink-faint)}
+.ch-states a:hover{border-color:var(--ink-faint)}
+.ch-states a.on{background:var(--deck);border-color:var(--genie-gold)}
+.ch-states a.on b{color:#fff}
+.ch-states a.on span{color:var(--genie-gold)}
+
+.ch-week{display:flex;align-items:center;gap:8px 18px;flex-wrap:wrap;padding:14px 0 16px;
+  border-bottom:1px solid var(--line);
+  font-family:var(--mono);font-size:12.5px;color:var(--ink-faint)}
+.ch-week > b{color:var(--ink);font-weight:400;letter-spacing:.04em;font-size:13.5px}
+.ch-flag{border:1px solid var(--genie-gold);color:var(--genie-gold);
+  border-radius:999px;padding:2px 10px;font-size:10px;letter-spacing:.14em;text-transform:uppercase}
+.ch-moved{color:var(--bar)}
+
+/* The countdown is the only thing on the page that moves while you read. */
+.cd{display:inline-flex;align-items:baseline;gap:7px}
+.cd-label{color:var(--ink-faint)}
+.cd b{color:var(--genie-gold);font-weight:400}
+.cd.done{color:var(--genie-gold)}
+
+/* ---------------- the name at the top ---------------- */
+.ch-one{display:grid;grid-template-columns:minmax(0,1fr) minmax(300px,470px);
+  gap:clamp(24px,4vw,52px);align-items:center;padding:clamp(26px,4vw,44px) var(--pad)}
+.ch-one-main{display:flex;gap:clamp(16px,3vw,28px);align-items:center;min-width:0}
+.ch-one-pic{flex:none;line-height:0;text-decoration:none}
+.ch-one-pic .mkt-hero-av{width:clamp(96px,14vw,150px);height:clamp(96px,14vw,150px);
+  border-radius:16px;font-size:clamp(30px,5vw,46px)}
+.ch-one-body{display:flex;flex-direction:column;align-items:flex-start;gap:3px;min-width:0}
+.ch-one-rank{font-family:var(--mono);font-size:11px;letter-spacing:.24em;
+  text-transform:uppercase;color:var(--genie-gold)}
+.ch-one-name{font-family:var(--display);font-weight:400;color:#fff;text-decoration:none;
+  font-size:clamp(40px,6vw,76px);line-height:.94;letter-spacing:.01em}
+.ch-one-name:hover{color:var(--genie-gold)}
+.ch-one-line{margin:2px 0 6px;font-size:clamp(14px,1.5vw,17px);color:var(--genie-pink)}
+.ch-one .why-line{margin:0 0 14px;max-width:56ch}
+
+.ch-one-figs{display:flex;gap:clamp(16px,3vw,34px);margin:14px 0 0;flex-wrap:wrap}
+.ch-one-figs div{display:flex;flex-direction:column;gap:1px}
+.ch-one-figs dt{font-family:var(--mono);font-size:10px;letter-spacing:.14em;
+  text-transform:uppercase;color:var(--ink-faint)}
+.ch-one-figs dd{margin:0;font-size:24px;color:var(--ink)}
+
+/* The card, on the page rather than only in a crawler's head. People
+   screenshot; this is the thing they would screenshot, plus a way to
+   take it without screenshotting. */
+.ch-card{margin:0;border:1px solid var(--line);border-radius:14px;overflow:hidden;background:var(--deck)}
+.ch-card img{display:block;width:100%;height:auto}
+.ch-card figcaption{display:flex;align-items:center;justify-content:space-between;gap:12px;
+  padding:9px 13px;border-top:1px solid var(--line);
+  font-family:var(--mono);font-size:11px;color:var(--ink-faint)}
+.ch-card figcaption a{color:var(--genie-gold);text-decoration:none}
+.ch-card figcaption a:hover{text-decoration:underline}
+
+/* ---------------- the week in a line ---------------- */
+.ch-summary{display:flex;gap:9px;flex-wrap:wrap;align-items:center;
+  padding:0 var(--pad) 16px}
+.ch-sum{display:flex;flex-direction:column;gap:1px;text-decoration:none;
+  border:1px solid var(--line);border-radius:10px;padding:8px 13px;min-width:0}
+.ch-sum:hover{border-color:var(--genie-gold)}
+.ch-sum span{font-family:var(--mono);font-size:10px;letter-spacing:.13em;
+  text-transform:uppercase;color:var(--ink-faint)}
+.ch-sum b{font-weight:600;font-size:14px;color:var(--ink);white-space:nowrap;
+  overflow:hidden;text-overflow:ellipsis}
+.ch-sum-counts{margin:0 0 0 auto;font-family:var(--mono);font-size:12px;color:var(--ink-faint)}
+.ch-sum-counts em{font-style:normal;color:var(--bar)}
+
+/* ---------------- the hundred ---------------- */
+.ch-list{list-style:none;margin:0;padding:0 var(--pad)}
+.ch-row{display:grid;
+  grid-template-columns:34px 40px auto minmax(150px,1fr) minmax(90px,2fr) 54px 34px 30px;
+  align-items:center;gap:12px;padding:8px 0;
+  border-bottom:1px solid rgba(30,50,71,.5)}
+.ch-row:hover{background:rgba(18,34,52,.4)}
+
+.ch-rank{font-family:var(--mono);font-size:16px;color:var(--ink-dim);text-align:right}
+.ch-move{font-family:var(--mono);font-size:12px;text-align:center;color:var(--flat)}
+.ch-move.up{color:var(--up)} .ch-move.down{color:var(--down)}
+.ch-move.new,.ch-move.reentry{color:var(--new);letter-spacing:.05em}
+
+.ch-name{display:flex;flex-direction:column;gap:0;min-width:0}
+.ch-name > a{font-size:15.5px;font-weight:600;color:var(--ink);text-decoration:none;
+  overflow:hidden;text-overflow:ellipsis;white-space:nowrap}
+.ch-name > a:hover{text-decoration:underline}
+.ch-row .why-line{margin:0;font-size:11.5px;font-weight:400;color:var(--ink-faint);
+  overflow:hidden;text-overflow:ellipsis;white-space:nowrap}
+.ch-row .why-line a{color:inherit}
+.ch-row .why-line a:hover{color:var(--genie-gold)}
+
+/* The bar. One series, so no legend — the score column beside it names
+   it. Thin, rounded at the data end, anchored left, and recessive
+   enough that a hundred of them read as a shape rather than as noise. */
+.ch-bar{display:block;height:8px;border-radius:5px;background:rgba(30,50,71,.55);overflow:hidden}
+.ch-bar-fill{display:block;height:100%;border-radius:5px;
+  background:linear-gradient(90deg,color-mix(in srgb,var(--bar) 62%,transparent),var(--bar));
+  transition:width .5s cubic-bezier(.2,.7,.3,1)}
+@media (prefers-reduced-motion:reduce){.ch-bar-fill{transition:none}}
+
+.ch-score{font-family:var(--mono);font-size:14.5px;color:var(--ink);text-align:right}
+
+/* What has moved since this reader last looked. Only on the live chart,
+   only on rows that actually moved. */
+.ch-shift{font-family:var(--mono);font-size:11px;text-align:right;color:transparent}
+.ch-shift.up{color:var(--up)} .ch-shift.down{color:var(--down)}
+.ch-row.shifted{background:rgba(94,200,232,.05)}
+.ch-row > .sh{justify-self:end}
+
+/* A new entry earns one mark, on the row's left edge, and nothing else. */
+.ch-row.new,.ch-row.reentry{box-shadow:inset 3px 0 0 var(--new)}
+
+/* ---------------- method, archive, empty ---------------- */
+.ch-method{margin:26px auto 0;max-width:min(72ch,var(--wrap));
+  border:1px solid var(--line);border-radius:12px;padding:14px 18px;background:var(--deck)}
+.ch-method summary{font-family:var(--mono);font-size:12px;letter-spacing:.1em;
+  text-transform:uppercase;color:var(--ink-dim);cursor:pointer}
+.ch-method summary:hover{color:var(--ink)}
+.ch-method p{margin:12px 0 0;font-size:14.5px;line-height:1.6;color:var(--ink-dim)}
+.ch-method b{color:var(--ink)}
+
+.ch-foot{padding:24px var(--pad) 0}
+.ch-archive-btn{background:transparent;border:1px solid var(--line);color:var(--ink-dim);
+  border-radius:999px;padding:8px 16px;font:inherit;font-size:13px;cursor:pointer}
+.ch-archive-btn:hover{border-color:var(--genie-gold);color:var(--genie-gold)}
+.ch-archive{list-style:none;margin:16px 0 0;padding:0;display:grid;
+  grid-template-columns:repeat(auto-fill,minmax(230px,1fr));gap:8px}
+.ch-archive a{display:flex;flex-direction:column;gap:2px;text-decoration:none;
+  border:1px solid var(--line);border-radius:10px;padding:10px 13px}
+.ch-archive a:hover{border-color:var(--genie-violet)}
+.ch-archive b{font-size:14px;font-weight:600;color:var(--ink)}
+.ch-archive span{font-family:var(--mono);font-size:11px;color:var(--ink-faint)}
+.ch-archive li.on a{border-color:var(--genie-gold)}
+
+.ch-note{padding:18px var(--pad);color:var(--ink-faint);font-size:14px}
+.ch-notyet{padding:clamp(36px,7vw,80px) var(--pad);max-width:min(60ch,var(--wrap))}
+.ch-notyet h2{font-family:var(--display);font-weight:400;font-size:clamp(28px,5vw,48px);
+  line-height:1;margin:0 0 14px;color:#fff}
+.ch-notyet p{margin:0 0 12px;font-size:16px;line-height:1.6;color:var(--ink-dim)}
+.ch-notyet .ch-note{padding:0 0 18px}
+
+/* ---------------- narrower ---------------- */
+@media (max-width:1000px){
+  .ch-one{grid-template-columns:1fr;gap:22px}
+  .ch-card{max-width:560px}
+}
+
+@media (max-width:760px){
+  .ch-states{max-width:none}
+  .ch-states a b{font-size:13px}
+  /* Rank, move, name, score. The bar and the picture go — at this width
+     they cost more room than they earn — but the SHARE button stays,
+     because a phone is where sharing actually happens. */
+  .ch-row{grid-template-columns:28px 34px minmax(0,1fr) 50px 30px;gap:9px}
+  .ch-row > .mkt-av,.ch-bar,.ch-shift{display:none}
+  .ch-one-main{gap:14px}
+  .ch-summary{gap:7px;padding-bottom:14px}
+  .ch-sum-counts{margin:4px 0 0;width:100%}
+}

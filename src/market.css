@@ -1,0 +1,320 @@
+/* ==================================================================
+   Celebrity Market — a terminal, not a celebrity news site.
+
+   The data is the product, so the design gets out of its way: dense
+   rows, tabular numerals, rules instead of gaps, and colour reserved
+   for meaning. Brand violet and gold are furniture only and never
+   carry data.
+
+   Every colour below was validated for colour-vision deficiency and
+   for contrast against the --deck surface. Status is never colour
+   alone — every state also carries its word.
+   ================================================================== */
+
+.mkt{
+  /* status — direction and state, never a series */
+  --up:#3DDC97; --down:#FF5A6E; --alert:#FFC145; --new:#A77BFF; --flat:#8CA3B8;
+  /* the four score components, in fixed order, never cycled */
+  --c-news:#3391D0; --c-momentum:#BE8A2E; --c-wikipedia:#E85C88; --c-breadth:#9366E0;
+
+  --row-h:44px;
+  --grid:rgba(30,50,71,.55);
+  background:var(--abyss); min-height:100vh;
+}
+.mkt *{font-variant-numeric:tabular-nums}
+
+/* ---------------- header ---------------- */
+.mkt-head{position:sticky;top:0;z-index:20;background:linear-gradient(180deg,var(--abyss) 72%,rgba(5,11,20,.92));
+  border-bottom:1px solid var(--line);padding:14px 20px 0}
+.mkt-head-top{display:flex;align-items:center;gap:20px;flex-wrap:wrap}
+.mkt-title{font-family:var(--display);font-weight:400;font-size:34px;line-height:1;margin:0;letter-spacing:.02em}
+.mkt-sub{font-family:var(--mono);font-size:11px;letter-spacing:.18em;text-transform:uppercase;color:var(--ink-faint)}
+.mkt-head-right{margin-left:auto;display:flex;align-items:center;gap:18px;font-family:var(--mono);font-size:12px;color:var(--ink-dim)}
+.mkt-live{display:inline-flex;align-items:center;gap:7px;color:var(--up)}
+.mkt-live i{width:7px;height:7px;border-radius:50%;background:var(--up);animation:mktPulse 2.4s ease-in-out infinite}
+@keyframes mktPulse{50%{opacity:.25}}
+.mkt-back{color:var(--ink-faint);text-decoration:none;font-family:var(--mono);font-size:12px}
+.mkt-back:hover{color:var(--ink)}
+
+.mkt-mock{background:var(--alert);color:#0A0716;font-family:var(--mono);font-size:11px;letter-spacing:.16em;
+  text-transform:uppercase;padding:6px 20px;font-weight:600}
+
+/* market-wide strip */
+.mkt-strip{display:flex;gap:26px;flex-wrap:wrap;padding:10px 0 12px;font-family:var(--mono);font-size:12px;color:var(--ink-faint)}
+.mkt-strip b{color:var(--ink);font-weight:600}
+.mkt-strip .up{color:var(--up)} .mkt-strip .down{color:var(--down)} .mkt-strip .alert{color:var(--alert)}
+
+/* ---------------- cards ---------------- */
+.mkt-cards{display:grid;grid-template-columns:repeat(5,1fr);gap:1px;background:var(--line);
+  border-top:1px solid var(--line);border-bottom:1px solid var(--line)}
+.mkt-card{background:var(--deck);padding:11px 14px;min-height:78px;display:flex;flex-direction:column;gap:4px;
+  text-decoration:none;color:inherit}
+a.mkt-card:hover{background:var(--deck-2)}
+.mkt-card-label{font-family:var(--mono);font-size:10px;letter-spacing:.18em;text-transform:uppercase;color:var(--ink-faint)}
+.mkt-card.alert .mkt-card-label{color:var(--alert)}
+.mkt-card-name{font-size:15px;font-weight:600;line-height:1.15;color:var(--ink)}
+.mkt-card-val{font-family:var(--mono);font-size:13px;margin-top:auto}
+.mkt-card-val.up{color:var(--up)} .mkt-card-val.down{color:var(--down)}
+.mkt-card-empty{font-size:12px;color:var(--ink-faint);font-style:italic;margin-top:auto}
+
+/* ---------------- tabs + search ---------------- */
+/* The tab strip scrolls sideways on narrow screens. The search sits OUTSIDE
+   it, or it would stretch the scroller and take the whole page with it. */
+.mkt-barrow{display:flex;align-items:center;gap:12px;padding:0 20px;border-bottom:1px solid var(--line)}
+.mkt-bar{flex:1 1 auto;min-width:0;display:flex;align-items:center;gap:6px;
+  overflow-x:auto;scrollbar-width:none}
+.mkt-bar::-webkit-scrollbar{display:none}
+.mkt-tab{appearance:none;background:none;border:0;border-bottom:2px solid transparent;color:var(--ink-faint);
+  font-family:var(--mono);font-size:11px;letter-spacing:.14em;text-transform:uppercase;padding:11px 12px;
+  cursor:pointer;white-space:nowrap}
+.mkt-tab:hover{color:var(--ink-dim)}
+.mkt-tab.on{color:var(--ink);border-bottom-color:var(--genie-violet)}
+.mkt-tab .n{color:var(--ink-faint);margin-left:6px}
+.mkt-search{flex:none;display:flex;align-items:center;gap:8px}
+.mkt-search input{background:var(--deck);border:1px solid var(--line);color:var(--ink);font-family:var(--mono);
+  font-size:12px;padding:6px 10px;width:190px;border-radius:2px}
+.mkt-search input:focus{outline:none;border-color:var(--genie-violet)}
+.mkt-search input::placeholder{color:var(--ink-faint)}
+
+/* ---------------- table ---------------- */
+.mkt-table{width:100%;border-collapse:collapse;font-size:13px}
+.mkt-table thead th{position:sticky;top:0;z-index:5;background:var(--abyss);border-bottom:1px solid var(--line);
+  font-family:var(--mono);font-size:10px;letter-spacing:.14em;text-transform:uppercase;color:var(--ink-faint);
+  font-weight:400;text-align:right;padding:9px 12px;cursor:pointer;white-space:nowrap;user-select:none}
+.mkt-table thead th:hover{color:var(--ink-dim)}
+.mkt-table thead th.sorted{color:var(--ink)}
+.mkt-table thead th .car{opacity:.6;margin-left:4px}
+.mkt-table thead th .short{display:none}
+.mkt-table th.l,.mkt-table td.l{text-align:left}
+.mkt-table tbody tr{height:var(--row-h);border-bottom:1px solid var(--grid)}
+.mkt-table tbody tr:hover{background:var(--deck)}
+.mkt-table td{padding:0 12px;text-align:right;white-space:nowrap}
+
+.mkt-rank{font-family:var(--mono);color:var(--ink-dim);width:78px}
+.mkt-rank .mv{margin-left:6px;font-size:11px}
+.mkt-rank .mv.up{color:var(--up)} .mkt-rank .mv.down{color:var(--down)} .mkt-rank .mv.new{color:var(--new)}
+
+.mkt-who{display:flex;align-items:center;gap:10px;min-width:0}
+.mkt-av{flex:none;width:28px;height:28px;border-radius:50%;background:var(--deck-2);border:1px solid var(--line);
+  display:grid;place-items:center;font-family:var(--display);font-size:14px;color:var(--ink-dim);overflow:hidden}
+.mkt-av img{width:100%;height:100%;object-fit:cover}
+.mkt-who a{color:var(--ink);text-decoration:none;font-weight:600}
+.mkt-who a:hover{color:var(--genie-violet)}
+.mkt-cat{font-family:var(--mono);font-size:10px;letter-spacing:.1em;text-transform:uppercase;color:var(--ink-faint)}
+
+.mkt-score{font-family:var(--mono);font-size:15px;font-weight:600;color:var(--ink);width:88px}
+.mkt-chg{font-family:var(--mono);width:84px}
+.mkt-chg.up{color:var(--up)} .mkt-chg.down{color:var(--down)} .mkt-chg.flat{color:var(--ink-faint)}
+.mkt-trend{width:54px;font-size:14px}
+.mkt-trend.up{color:var(--up)} .mkt-trend.down{color:var(--down)} .mkt-trend.flat{color:var(--ink-faint)}
+.mkt-num{font-family:var(--mono);color:var(--ink-dim);width:96px}
+.mkt-att{color:var(--ink-dim);width:104px;font-size:12px}
+.mkt-mom{font-family:var(--mono);width:104px}
+.mkt-mom .bar{display:inline-block;width:42px;height:4px;background:var(--deck-2);margin-right:8px;vertical-align:middle;position:relative}
+.mkt-mom .bar i{position:absolute;top:0;bottom:0;left:50%;background:var(--flat)}
+.mkt-mom.up .bar i{background:var(--up)} .mkt-mom.down .bar i{background:var(--down)}
+.mkt-spark{width:92px;padding-right:0}
+.mkt-spark svg{display:block;width:80px;height:22px;overflow:visible}
+
+.mkt-status{width:112px}
+.mkt-chip{display:inline-block;font-family:var(--mono);font-size:10px;letter-spacing:.1em;padding:3px 8px;
+  border:1px solid currentColor;border-radius:2px}
+.mkt-chip.alert{color:var(--alert);background:rgba(255,193,69,.1)}
+.mkt-chip.up{color:var(--up);background:rgba(61,220,151,.09)}
+.mkt-chip.down{color:var(--down);background:rgba(255,90,110,.09)}
+.mkt-chip.neutral{color:var(--ink-dim)}
+.mkt-chip.mute{color:var(--ink-faint)}
+.mkt-chip.new{color:var(--new);background:rgba(167,123,255,.12)}
+
+/* a changed score flashes in the direction it moved — the one bit of
+   motion that makes a table read as live rather than merely current */
+@keyframes mktUp{0%{background:rgba(61,220,151,.22)}100%{background:transparent}}
+@keyframes mktDown{0%{background:rgba(255,90,110,.22)}100%{background:transparent}}
+tr.flash-up{animation:mktUp 1.1s ease-out}
+tr.flash-down{animation:mktDown 1.1s ease-out}
+
+.mkt-thin{padding:36px 20px;color:var(--ink-faint);font-size:13px}
+.mkt-low{color:var(--ink-faint);font-size:10px;font-family:var(--mono);margin-left:6px}
+
+/* ---------------- why the market is moving ---------------- */
+.mkt-movers{max-width:1280px;margin:0 auto;padding:22px 20px 4px}
+.mkt-movers-head{display:flex;align-items:baseline;gap:14px;flex-wrap:wrap;margin-bottom:12px}
+.mkt-movers-head h2{font-family:var(--display);font-weight:400;font-size:26px;letter-spacing:.03em;margin:0}
+.mkt-movers-head span{font-family:var(--mono);font-size:11px;color:var(--ink-faint)}
+/* min-width:0 on the tracks and on the name.
+
+   A `1fr` track is min-width:auto, so it grows to the widest thing inside it —
+   and the reason line under each name is a single nowrap sentence. Without
+   this the grid silently widens past the viewport and the whole market screen
+   scrolls sideways on a phone, which is how the column reads as "broken" long
+   before anyone notices the cause. */
+.mkt-mv-cols{display:grid;grid-template-columns:1fr 1fr;gap:10px 28px}
+.mkt-mv-col{min-width:0}
+.mkt-mv-col h3{font-family:var(--mono);font-size:11px;letter-spacing:.14em;text-transform:uppercase;
+  color:var(--ink-faint);margin:0 0 6px}
+.mkt-mv-col.up h3{color:var(--up)} .mkt-mv-col.down h3{color:var(--down)}
+/* Name and reason down the left, the share button beside them — it spans
+   both rows so it sits against the middle of the row, not the top of it. */
+.mkt-mv-item{display:grid;grid-template-columns:minmax(0,1fr) auto;column-gap:10px;
+  padding:7px 0;border-top:1px solid var(--line)}
+.mkt-mv-item > .mkt-mv-name,.mkt-mv-item > .why-line{grid-column:1}
+.mkt-mv-item > .sh{grid-column:2;grid-row:1 / span 2;align-self:center}
+.mkt-mv-name{display:flex;align-items:baseline;gap:12px;text-decoration:none;color:var(--ink);font-size:16px}
+.mkt-mv-name:hover .nm{text-decoration:underline}
+.mkt-mv-name .nm{min-width:0;font-weight:600;overflow:hidden;text-overflow:ellipsis;white-space:nowrap}
+.mkt-mv-name .mv{margin-left:auto;flex:none;font-family:var(--mono);font-size:13px}
+.mkt-mv-col.up .mv{color:var(--up)} .mkt-mv-col.down .mv{color:var(--down)}
+/* Two lines here rather than one clipped one. The board has the room, and a
+   headline cut off at "…and nobody saw it…" tells the reader less than nothing. */
+.mkt-mv-item .why-line{margin-top:2px;white-space:normal;
+  display:-webkit-box;-webkit-line-clamp:2;-webkit-box-orient:vertical;overflow:hidden}
+@media (max-width:720px){.mkt-mv-cols{grid-template-columns:1fr}.mkt-movers{padding:18px 12px 4px}}
+
+/* ---------------- detail ---------------- */
+.mkt-detail{max-width:1280px;margin:0 auto;padding:0 20px 60px}
+.mkt-hero{display:flex;gap:22px;align-items:flex-start;padding:22px 0 18px;border-bottom:1px solid var(--line);flex-wrap:wrap}
+/* The picture and its credit travel together: attribution is the condition of
+   the licence, so it cannot be somewhere else on the page. */
+.mkt-hero-pic{flex:none;display:flex;flex-direction:column;align-items:center;gap:6px;max-width:132px}
+.mkt-hero-av{flex:none;width:112px;height:112px;border-radius:50%;background:var(--deck-2);border:1px solid var(--line);
+  display:grid;place-items:center;font-family:var(--display);font-size:44px;color:var(--ink-dim);overflow:hidden}
+.mkt-hero-av img{width:100%;height:100%;object-fit:cover;object-position:center top}
+.mkt-credit{margin:0;font-size:10px;line-height:1.35;color:var(--ink-faint);text-align:center;
+  display:flex;flex-direction:column;gap:1px;max-width:100%}
+/* The photographer clamps to two lines; the licence below it never does. */
+.mkt-credit .who{overflow-wrap:anywhere;
+  display:-webkit-box;-webkit-line-clamp:2;-webkit-box-orient:vertical;overflow:hidden}
+.mkt-credit .lic{white-space:nowrap}
+.mkt-credit a{color:inherit}
+.mkt-why{padding:16px 0;border-bottom:1px solid var(--line)}
+.mkt-hero h1{font-family:var(--display);font-weight:400;font-size:46px;line-height:1;margin:0 0 6px}
+.mkt-hero-meta{font-family:var(--mono);font-size:11px;letter-spacing:.14em;text-transform:uppercase;color:var(--ink-faint)}
+.mkt-hero-figs{margin-left:auto;display:flex;gap:1px;background:var(--line);border:1px solid var(--line)}
+.mkt-fig{background:var(--deck);padding:10px 18px;min-width:104px}
+.mkt-fig span{display:block;font-family:var(--mono);font-size:10px;letter-spacing:.14em;text-transform:uppercase;color:var(--ink-faint);margin-bottom:3px}
+.mkt-fig b{font-family:var(--mono);font-size:22px;font-weight:600;color:var(--ink)}
+.mkt-fig b.up{color:var(--up)} .mkt-fig b.down{color:var(--down)}
+.mkt-fig b.big{font-size:30px}
+
+.mkt-ranges{display:flex;gap:4px;padding:16px 0 10px}
+.mkt-range{appearance:none;background:var(--deck);border:1px solid var(--line);color:var(--ink-dim);
+  font-family:var(--mono);font-size:11px;letter-spacing:.1em;padding:5px 13px;cursor:pointer;border-radius:2px}
+.mkt-range.on{background:var(--deck-2);color:var(--ink);border-color:var(--genie-violet)}
+
+.mkt-chart{position:relative;background:var(--deck);border:1px solid var(--line);padding:14px 14px 6px}
+.mkt-plot{position:relative;padding:0 0 18px}
+.mkt-chart svg{display:block;width:100%;height:280px;overflow:visible}
+/* Axis labels are HTML, so stretching the plot never distorts the type. */
+.mkt-ytick,.mkt-xtick{position:absolute;font-family:var(--mono);font-size:10px;color:var(--ink-faint);
+  pointer-events:none;white-space:nowrap}
+.mkt-ytick{left:0;transform:translateY(-50%)}
+.mkt-xtick{bottom:0}
+.mkt-xtick.start{left:38px}
+.mkt-xtick.end{right:12px}
+.mkt-chart .grid{stroke:var(--grid);stroke-width:1}
+.mkt-chart-title{font-family:var(--mono);font-size:11px;letter-spacing:.14em;text-transform:uppercase;color:var(--ink-dim);margin-bottom:10px}
+.mkt-tip{position:absolute;pointer-events:none;background:var(--abyss);border:1px solid var(--line);
+  padding:7px 10px;font-family:var(--mono);font-size:11px;color:var(--ink);white-space:nowrap;z-index:6;border-radius:2px}
+.mkt-tip b{display:block;font-size:14px}
+.mkt-tip em{font-style:normal;color:var(--ink-faint)}
+
+.mkt-cols{display:grid;grid-template-columns:1fr 1fr;gap:20px;margin-top:22px}
+.mkt-cols > *{min-width:0}
+.mkt-panel{background:var(--deck);border:1px solid var(--line);padding:16px 18px}
+.mkt-panel h2{font-family:var(--mono);font-size:11px;letter-spacing:.16em;text-transform:uppercase;
+  color:var(--ink-dim);margin:0 0 14px;font-weight:400}
+.mkt-comp{display:flex;align-items:center;gap:12px;padding:8px 0;border-bottom:1px solid var(--grid)}
+.mkt-comp:last-child{border-bottom:0}
+.mkt-comp i{flex:none;width:9px;height:9px;border-radius:2px}
+.mkt-comp .nm{flex:1;font-size:13px;color:var(--ink)}
+.mkt-comp .track{flex:none;width:130px;height:6px;background:var(--deck-2)}
+.mkt-comp .track b{display:block;height:100%}
+.mkt-comp .v{font-family:var(--mono);font-size:13px;width:52px;text-align:right;color:var(--ink)}
+.mkt-comp .fresh{font-family:var(--mono);font-size:10px;color:var(--ink-faint);width:88px;text-align:right}
+.mkt-comp.stale .fresh{color:var(--alert)}
+
+.mkt-kv{display:flex;justify-content:space-between;gap:16px;padding:7px 0;border-bottom:1px solid var(--grid);font-size:13px}
+.mkt-kv:last-child{border-bottom:0}
+.mkt-kv span{color:var(--ink-dim)}
+.mkt-kv b{font-family:var(--mono);font-weight:600}
+
+.mkt-stories{margin-top:22px}
+.mkt-story{display:flex;gap:14px;padding:10px 0;border-bottom:1px solid var(--grid);align-items:baseline}
+.mkt-story time{font-family:var(--mono);font-size:11px;color:var(--ink-faint);flex:none;width:58px}
+.mkt-story a{color:var(--ink);text-decoration:none;font-size:14px}
+.mkt-story a:hover{color:var(--genie-violet)}
+.mkt-story .pub{font-family:var(--mono);font-size:10px;color:var(--ink-faint);margin-left:auto;flex:none}
+
+.mkt-spike{background:var(--deck-2);border-left:3px solid var(--alert);padding:11px 14px;margin:10px 0;font-size:13px}
+.mkt-spike b{font-family:var(--mono);color:var(--alert)}
+.mkt-spike em{font-style:normal;color:var(--ink-dim)}
+
+/* ---------------- admin ---------------- */
+.mkt-admin{max-width:1280px;margin:0 auto;padding:20px 20px 60px}
+.mkt-admin h1{font-family:var(--display);font-weight:400;font-size:38px;margin:0 0 4px}
+.mkt-admin select{background:var(--deck);border:1px solid var(--line);color:var(--ink);
+  font-family:var(--mono);font-size:12px;padding:6px 8px;border-radius:2px;max-width:100%}
+.mkt-admin input[type=range]{accent-color:var(--genie-violet)}
+.mkt-derive{width:100%;border-collapse:collapse;font-family:var(--mono);font-size:12px;margin-top:8px}
+/* Six columns will not fit a phone; the table scrolls inside its panel
+   rather than dragging the whole page sideways. */
+.mkt-derive-wrap{overflow-x:auto;margin:0 -18px;padding:0 18px}
+.mkt-derive-wrap .mkt-derive{min-width:max-content}
+.mkt-derive td,.mkt-derive th{white-space:nowrap}
+.mkt-derive th{text-align:right;color:var(--ink-faint);font-weight:400;padding:6px 10px;border-bottom:1px solid var(--line);font-size:10px;letter-spacing:.12em;text-transform:uppercase}
+.mkt-derive td{text-align:right;padding:6px 10px;border-bottom:1px solid var(--grid)}
+.mkt-derive th.l,.mkt-derive td.l{text-align:left}
+.mkt-derive tr.total td{border-top:1px solid var(--line);border-bottom:0;color:var(--ink);font-weight:600;font-size:14px}
+.mkt-derive tr.dropped td{color:var(--ink-faint)}
+.mkt-derive .swatch{display:inline-block;width:8px;height:8px;border-radius:2px;margin-right:8px}
+.mkt-raw{background:var(--abyss);border:1px solid var(--line);padding:12px;font-family:var(--mono);font-size:11px;
+  color:var(--ink-dim);max-height:320px;overflow:auto;white-space:pre-wrap;word-break:break-word}
+.mkt-weight{display:flex;align-items:center;gap:12px;padding:6px 0;font-family:var(--mono);font-size:12px}
+.mkt-weight label{width:96px;color:var(--ink-dim)}
+.mkt-weight input{flex:1;accent-color:var(--genie-violet);background:transparent}
+.mkt-weight b{width:52px;text-align:right}
+.mkt-note{font-size:12px;color:var(--ink-faint);margin:10px 0 0;line-height:1.5}
+
+/* ---------------- mobile: still a market, not a card stack ---------------- */
+@media (max-width:900px){
+  .mkt-cards{grid-template-columns:repeat(2,1fr)}
+  .mkt-card:nth-child(5){grid-column:span 2}
+  .mkt-cols{grid-template-columns:1fr}
+  .mkt-hero-figs{margin-left:0;width:100%;display:grid;grid-template-columns:1fr 1fr}
+  .mkt-fig{min-width:0}
+}
+@media (max-width:720px){
+  .mkt-head{padding:12px 12px 0}
+  /* search above the tabs, each on its own line */
+  .mkt-barrow{flex-direction:column;align-items:stretch;gap:0;padding:0 12px}
+  .mkt-bar{order:2;width:100%}
+  .mkt-search{order:1;width:100%;padding:10px 0}
+  .mkt-search input{width:100%}
+  /* the component rows drop their bar and let the label take the room */
+  .mkt-comp{flex-wrap:wrap;gap:8px 10px}
+  .mkt-comp .track{display:none}
+  .mkt-comp .nm{flex:1 1 60%;min-width:0}
+  .mkt-comp .v{width:auto;min-width:40px}
+  .mkt-comp .fresh{width:auto;flex:1 1 100%;text-align:left}
+  .mkt-kv{flex-wrap:wrap}
+  /* Declared column widths are only a suggestion unless the layout is fixed —
+     without this the cells size to their content and drag the page sideways. */
+  .mkt-table{font-size:12px;table-layout:fixed}
+  .mkt-table td,.mkt-table thead th{padding:0 7px;overflow:hidden;text-overflow:ellipsis}
+  .mkt-table thead th .full{display:none}
+  .mkt-table thead th .short{display:inline}
+  /* keep rank, name, score, change, trend — the rest live on the detail page */
+  .mkt-table .opt{display:none}
+  .mkt-rank{width:52px}
+  .mkt-rank .mv{margin-left:3px;font-size:10px}
+  .mkt-score{width:54px;font-size:13px}
+  .mkt-chg{width:56px}
+  .mkt-trend{width:38px;padding:0 2px}
+  .mkt-cat{display:none}
+  .mkt-av{width:22px;height:22px;font-size:11px}
+  .mkt-who{gap:7px}
+  .mkt-who a{overflow:hidden;text-overflow:ellipsis;white-space:nowrap;min-width:0}
+  .mkt-low{display:none}
+  .mkt-detail,.mkt-admin{padding-left:12px;padding-right:12px}
+  .mkt-hero h1{font-size:34px}
+}

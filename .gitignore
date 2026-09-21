@@ -1,0 +1,25 @@
+# Dependencies and build output — regenerated, never reviewed.
+node_modules
+dist
+
+# Local runs. `.data` is a local feed, `.market-data` a local copy of the
+# market store; both are derived, both change on every run, and the real
+# ones live in Netlify Blobs.
+.data
+.market-data
+
+# Netlify CLI state (site id, local function cache) and anything holding
+# a key. Secrets belong in Netlify's environment, not in a file here.
+.netlify
+.env
+.env.*
+
+# Rendered card proofs from `npm run cards`.
+out/
+
+# Vite writes one of these every time the config is touched during a dev
+# run and does not always clear up after itself.
+vite.config.js.timestamp-*
+
+# macOS.
+.DS_Store

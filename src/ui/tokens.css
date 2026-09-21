@@ -1,0 +1,30 @@
+/* ------------------------------------------------------------------
+   Kapang design tokens.
+
+   Lifted verbatim from El Nino Watch so the two apps are siblings, not
+   cousins. Do not fork these values inside an app — add a token here.
+   ------------------------------------------------------------------ */
+:root{
+  /* ground */
+  --abyss:#050B14; --deck:#0C1724; --deck-2:#122234; --line:#1E3247;
+  /* type */
+  --ink:#E9F1F8; --ink-dim:#8CA3B8; --ink-faint:#5C748C;
+  /* signal */
+  --warm:#FF6B35; --warm-hot:#E01B24; --cool:#3DA5D9; --cool-deep:#1B6CA8;
+  --gold:#FFC145;
+  /* brand */
+  --kapang:#159EDC;
+  /* families */
+  --display:"Bebas Neue","Haettenschweiler","Arial Narrow",sans-serif;
+  --body:"IBM Plex Sans","Segoe UI",Helvetica,Arial,sans-serif;
+  --mono:"IBM Plex Mono","SFMono-Regular",Consolas,monospace;
+  /* measure */
+  --wrap:1080px;
+}
+
+/* The hosted build ships without a reset, and display:flex beats the
+   default [hidden] rule — so state it explicitly. */
+*{box-sizing:border-box}
+[hidden]{display:none !important}
+body{margin:0;background:var(--abyss);color:var(--ink);font-family:var(--body);
+  font-size:16px;line-height:1.6;-webkit-font-smoothing:antialiased}

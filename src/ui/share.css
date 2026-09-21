@@ -1,0 +1,45 @@
+/* ------------------------------------------------------------------
+   The share control.
+
+   One button, and — where the operating system has no share sheet of its
+   own — a short menu under it. `--sh-tone` lets a story or a celebrity
+   page tint it to match whatever it is sitting on, without a second class.
+   ------------------------------------------------------------------ */
+.sh{position:relative;display:inline-flex;--sh-tone:var(--genie-gold)}
+
+.sh-btn{display:inline-flex;align-items:center;gap:8px;
+  background:transparent;border:1px solid var(--line);color:var(--ink);
+  border-radius:999px;padding:7px 15px;font:inherit;font-size:13px;line-height:1;
+  cursor:pointer;transition:border-color .16s ease,color .16s ease,background .16s ease}
+.sh-btn svg{display:block;flex:none}
+.sh-btn:hover,.sh-btn:focus-visible{border-color:var(--sh-tone);color:var(--sh-tone)}
+.sh.open .sh-btn{border-color:var(--sh-tone);color:var(--sh-tone)}
+
+/* Compact: icon only, for a card or a board row where a word would crowd it. */
+.sh.compact .sh-btn{padding:7px;border-color:transparent;color:var(--ink-faint)}
+.sh.compact .sh-btn:hover,.sh.compact .sh-btn:focus-visible{color:var(--sh-tone);border-color:var(--line)}
+
+.sh-menu{position:absolute;z-index:40;top:calc(100% + 8px);right:0;min-width:210px;
+  background:var(--deck);border:1px solid var(--line);border-radius:12px;padding:6px;
+  box-shadow:0 18px 40px rgba(0,0,0,.5);
+  display:flex;flex-direction:column;gap:2px;
+  animation:sh-in .14s ease-out}
+@keyframes sh-in{from{opacity:0;transform:translateY(-4px)}to{opacity:1;transform:none}}
+@media (prefers-reduced-motion:reduce){.sh-menu{animation:none}}
+
+.sh-item{display:flex;align-items:center;gap:11px;width:100%;
+  background:transparent;border:0;border-radius:8px;padding:9px 11px;
+  font:inherit;font-size:14px;color:var(--ink);text-align:left;text-decoration:none;cursor:pointer}
+.sh-item:hover,.sh-item:focus-visible{background:var(--deck-2);color:var(--ink)}
+.sh-ico{width:18px;flex:none;text-align:center;color:var(--ink-dim);font-size:15px;line-height:1}
+.sh-item:hover .sh-ico{color:var(--sh-tone)}
+
+/* The address, so it is obvious what is about to be copied. */
+.sh-url{margin:6px 5px 3px;padding-top:7px;border-top:1px solid var(--line);
+  font-family:var(--mono);font-size:11px;color:var(--ink-faint);
+  overflow:hidden;text-overflow:ellipsis;white-space:nowrap}
+
+/* On a narrow screen the menu would hang off the edge; pin it to the right. */
+@media (max-width:420px){
+  .sh-menu{right:0;left:auto;min-width:min(240px,calc(100vw - 32px))}
+}

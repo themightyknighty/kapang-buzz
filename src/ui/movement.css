@@ -1,0 +1,78 @@
+/* ==================================================================
+   Why a name moved — the shared look, wherever it is shown.
+
+   One data hue (#5EC8E8, the same one the score bars use, because it is
+   the same measure) and one de-emphasis grey. Marks are thin, the
+   baseline is recessive, every bar is direct-labelled so nothing rests
+   on colour alone, and fills sit 2px clear of each other.
+   ================================================================== */
+/*
+ * The tokens sit on every component that uses them, not only on the block
+ * wrapper. The sparkline is rendered on its own on the front-page strip and
+ * on air, and scoping the hue to `.mv` meant `stroke: var(--mv-data)`
+ * resolved to nothing there — the line simply did not draw, and the only
+ * thing on screen was the peak marker falling back to black.
+ */
+.mv,.mv-spark,.mv-drivers,.mv-thin,.mv-conf{--mv-data:#5EC8E8;--mv-still:var(--ink-faint)}
+.mv{display:flex;flex-direction:column;gap:12px}
+
+.mv-says{display:flex;flex-direction:column;gap:4px}
+.mv-says p{margin:0;font-size:14px;line-height:1.45;color:var(--ink-dim)}
+.mv-says p.lead{font-size:15px;color:#fff;font-weight:600}
+
+/* ---- the week ---- */
+.mv-week{margin:0;display:flex;flex-direction:column;gap:4px}
+.mv-spark{display:block;overflow:visible}
+.mv-spark-base{stroke:rgba(140,163,184,.28);stroke-width:1}
+.mv-spark-line{fill:none;stroke:var(--mv-data);stroke-width:2;
+  stroke-linejoin:round;stroke-linecap:round}
+.mv-spark-dot{fill:var(--mv-data)}
+.mv-spark-peak{fill:var(--mv-data);stroke:var(--abyss);stroke-width:2}
+/* A hit target bigger than the mark, invisible until it is wanted. */
+.mv-spark-hit{fill:transparent}
+.mv-spark-hit:hover{fill:rgba(94,200,232,.28)}
+.mv-week figcaption{font-family:var(--mono);font-size:11px;letter-spacing:.04em;
+  color:var(--ink-faint)}
+
+/* ---- what moved ---- */
+.mv-drivers{list-style:none;margin:0;padding:0;display:flex;flex-direction:column;gap:6px}
+.mv-drivers li{display:grid;grid-template-columns:72px minmax(60px,1fr) auto;
+  align-items:center;gap:10px}
+.mv-d-label{font-family:var(--mono);font-size:10.5px;letter-spacing:.12em;
+  text-transform:uppercase;color:var(--ink-faint)}
+.mv-d-track{display:block;height:8px;border-radius:4px;
+  background:rgba(30,50,71,.55);overflow:hidden}
+.mv-d-fill{display:block;height:100%;border-radius:4px;background:var(--mv-still)}
+.mv-drivers li.moved .mv-d-fill{background:var(--mv-data)}
+.mv-d-value{font-family:var(--mono);font-size:11.5px;color:var(--ink-dim);
+  white-space:nowrap;font-variant-numeric:tabular-nums}
+.mv-drivers li.moved .mv-d-value{color:#fff}
+.mv-drivers li.still .mv-d-value{color:var(--ink-faint)}
+.mv-drivers.compact li{grid-template-columns:62px minmax(40px,1fr) auto;gap:8px}
+.mv-drivers.compact .mv-d-track{height:6px}
+
+/* ---- the honesty label ---- */
+.mv-thin{margin:0;display:flex;align-items:baseline;gap:8px;
+  font-size:13px;line-height:1.4;color:var(--ink-dim)}
+.mv-thin b{font-family:var(--mono);font-size:10px;letter-spacing:.16em;
+  text-transform:uppercase;color:var(--gold);border:1px solid var(--gold);
+  border-radius:3px;padding:2px 6px;flex:none;font-weight:400}
+
+.mv-conf{font-family:var(--mono);font-size:10px;letter-spacing:.16em;
+  text-transform:uppercase;color:var(--ink-faint);
+  border:1px solid var(--line);border-radius:3px;padding:2px 7px}
+.mv-conf.strong{color:var(--health);border-color:rgba(61,220,151,.45)}
+.mv-conf.corroborated{color:var(--mv-data,#5EC8E8);border-color:rgba(94,200,232,.45)}
+.mv-conf.thin{color:var(--gold);border-color:rgba(255,193,69,.5)}
+
+.mv-story{display:block;font-size:12.5px;line-height:1.35;color:var(--ink-faint);
+  text-decoration:none;border-left:2px solid var(--line);padding-left:10px}
+.mv-story:hover{color:var(--gold);border-left-color:var(--gold)}
+
+/* One line, for a row on a board. */
+.mv-row{display:block;font-size:12.5px;line-height:1.35;color:var(--ink-faint);
+  overflow:hidden;text-overflow:ellipsis}
+
+@media (prefers-reduced-motion:reduce){
+  .mv-spark-hit{transition:none}
+}

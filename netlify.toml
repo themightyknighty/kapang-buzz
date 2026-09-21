@@ -1,0 +1,167 @@
+# Kapang Buzz — its own Netlify site.
+[build]
+  command = "npm run build"
+  publish = "dist"
+
+[build.environment]
+  NODE_VERSION = "22"
+
+[functions]
+  directory = "netlify/functions"
+  node_bundler = "esbuild"
+  # `dist/index.html` is the app as Vite just built it — the page function
+  # serves that exact file with this page's preview tags spliced in, so a
+  # shared link opens the real app rather than a stand-in. The build command
+  # runs before functions are bundled, so it is there by the time this is read.
+  included_files = ["pipeline/**", "market/**", "netlify/fonts/**", "dist/index.html"]
+  # resvg is a native binary. Bundling it produces a function that loads on
+  # nobody's machine, so it is installed rather than inlined.
+  external_node_modules = ["@resvg/resvg-js"]
+
+[functions."sync-schedule"]
+  schedule = "0 0,13,19 * * *"
+
+# The market runs on its own clock: one shard of the roster every 15 minutes,
+# and a daily job at 03:00 UTC for Wikipedia, rollups, records and pruning.
+[functions."market-schedule"]
+  schedule = "*/15 * * * *"
+
+[functions."market-daily"]
+  schedule = "0 3 * * *"
+
+# The Genie 100 goes out once a week and never changes afterwards. 13:00 UTC
+# is 9am Eastern in summer, 8am in winter — Netlify's scheduler speaks only
+# UTC, and the news schedule already drifts the same way.
+[functions."chart-weekly"]
+  schedule = "0 13 * * 1"
+
+[[redirects]]
+  from = "/api/feed"
+  to = "/.netlify/functions/feed"
+  status = 200
+
+[[redirects]]
+  from = "/api/status"
+  to = "/.netlify/functions/status"
+  status = 200
+
+[[redirects]]
+  from = "/api/report"
+  to = "/.netlify/functions/report"
+  status = 200
+
+[[redirects]]
+  from = "/api/pull"
+  to = "/.netlify/functions/pull"
+  status = 200
+
+# ---- The Genie 100 ----
+[[redirects]]
+  from = "/api/chart"
+  to = "/.netlify/functions/chart"
+  status = 200
+
+[[redirects]]
+  from = "/api/chart/:id"
+  to = "/.netlify/functions/chart/:id"
+  status = 200
+
+# ---- Celebrity Market ----
+[[redirects]]
+  from = "/api/market"
+  to = "/.netlify/functions/market"
+  status = 200
+
+[[redirects]]
+  from = "/api/market/search"
+  to = "/.netlify/functions/market-search"
+  status = 200
+
+[[redirects]]
+  from = "/api/market/health"
+  to = "/.netlify/functions/market-health"
+  status = 200
+
+[[redirects]]
+  from = "/api/market/publish"
+  to = "/.netlify/functions/market-publish"
+  status = 200
+
+[[redirects]]
+  from = "/api/market/run"
+  to = "/.netlify/functions/market-run"
+  status = 200
+
+[[redirects]]
+  from = "/api/market/explain/:slug"
+  to = "/.netlify/functions/market-explain/:slug"
+  status = 200
+
+[[redirects]]
+  from = "/api/market/:slug"
+  to = "/.netlify/functions/market-celebrity/:slug"
+  status = 200
+
+# ---- Sharing ----
+# Share cards. Drawn on demand, cached hard at the edge.
+[[redirects]]
+  from = "/og/*"
+  to = "/.netlify/functions/og/:splat"
+  status = 200
+
+# Every address somebody might share individually is served by the page
+# function, which returns the built app with that page's own title, blurb and
+# card in the head. `/` is not in this list on purpose: its tags never change,
+# so they sit in index.html and the front page stays a plain CDN hit.
+#
+# These must come before the catch-all below — Netlify takes the first rule
+# that matches.
+[[redirects]]
+  from = "/chart"
+  to = "/.netlify/functions/page/chart"
+  status = 200
+
+[[redirects]]
+  from = "/chart/:id"
+  to = "/.netlify/functions/page/chart/:id"
+  status = 200
+
+[[redirects]]
+  from = "/story/:id"
+  to = "/.netlify/functions/page/story/:id"
+  status = 200
+
+[[redirects]]
+  from = "/market"
+  to = "/.netlify/functions/page/market"
+  status = 200
+
+[[redirects]]
+  from = "/market/:slug"
+  to = "/.netlify/functions/page/market/:slug"
+  status = 200
+
+[[redirects]]
+  from = "/strand/:key"
+  to = "/.netlify/functions/page/strand/:key"
+  status = 200
+
+[[redirects]]
+  from = "/watch"
+  to = "/.netlify/functions/page/watch"
+  status = 200
+
+[[redirects]]
+  from = "/vertical"
+  to = "/.netlify/functions/page/vertical"
+  status = 200
+
+[[redirects]]
+  from = "/quiz"
+  to = "/.netlify/functions/page/quiz"
+  status = 200
+
+[[redirects]]
+  from = "/*"
+  to = "/index.html"
+  status = 200

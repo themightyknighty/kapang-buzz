@@ -1,0 +1,611 @@
+{
+ "generatedAt": "2026-09-16T19:55:00Z",
+ "sample": true,
+ "counts": {
+  "celebrity": 4,
+  "health": 3,
+  "facts": 3,
+  "bizarre": 3,
+  "total": 13
+ },
+ "stories": [
+  {
+   "id": "sample-00",
+   "key": "sample-0",
+   "strand": "celebrity",
+   "publishedAt": "2026-09-16T19:52:00Z",
+   "runId": "sample",
+   "headline": "Sample Star Ava Lumen announces world tour",
+   "caption": "The fictional pop star confirmed 40 dates across five continents, starting next spring.",
+   "body": "This is a sample story showing how celebrity news will look on Kapang Buzz. Fictional singer Ava Lumen has announced a 40-date world tour visiting five continents. The tour starts next spring and includes her first ever shows in South America. Fans have already started planning outfits for the opening night. Real stories will appear here once the live feed starts publishing.",
+   "keyFacts": [
+    "40 dates across five continents",
+    "Starts next spring",
+    "First shows in South America"
+   ],
+   "whyTrending": "Fans have waited three years for new live dates",
+   "people": [
+    "Ava Lumen"
+   ],
+   "bigNumber": {
+    "value": "40",
+    "label": "tour dates"
+   },
+   "quiz": {
+    "statement": "Ava Lumen’s tour visits five continents.",
+    "answer": true
+   },
+   "outlets": 9,
+   "sources": [
+    {
+     "name": "Sample source",
+     "url": "https://kapang.com"
+    }
+   ],
+   "image": null,
+   "sample": true
+  },
+  {
+   "id": "sample-01",
+   "key": "sample-1",
+   "strand": "health",
+   "publishedAt": "2026-09-16T19:15:00Z",
+   "runId": "sample",
+   "headline": "A short walk after meals can help",
+   "caption": "Just a few minutes of gentle walking after eating helps the body handle sugar from food.",
+   "body": "Taking a short, easy walk after a meal can help your body manage the sugar from your food. Researchers have found that even two to five minutes of light movement makes a difference compared with sitting still. It does not need to be fast or long. A stroll around the block, walking the dog or tidying up the kitchen all count. General information, not medical advice.",
+   "keyFacts": [
+    "Two to five minutes can help",
+    "Gentle pace is enough",
+    "Housework counts too"
+   ],
+   "whyTrending": "An easy habit almost anyone can try today",
+   "people": [],
+   "bigNumber": null,
+   "quiz": {
+    "statement": "A walk must last an hour to help after a meal.",
+    "answer": false
+   },
+   "outlets": 4,
+   "sources": [
+    {
+     "name": "Sample source",
+     "url": "https://kapang.com"
+    }
+   ],
+   "image": null,
+   "sample": true
+  },
+  {
+   "id": "sample-02",
+   "key": "sample-2",
+   "strand": "facts",
+   "publishedAt": "2026-09-16T18:38:00Z",
+   "runId": "sample",
+   "headline": "Octopuses have three hearts and blue blood",
+   "caption": "Two hearts pump blood through the gills while the third sends it around the rest of the body.",
+   "body": "Octopuses are even stranger than they look. Each one has three hearts. Two of them push blood through the gills, where it picks up oxygen, and the third pumps it around the body. Their blood is blue because it uses copper rather than iron to carry oxygen. That copper-based blood works well in cold ocean water with little oxygen.",
+   "keyFacts": [
+    "Three hearts in every octopus",
+    "Blue blood uses copper",
+    "Two hearts serve the gills"
+   ],
+   "whyTrending": "One of nature’s most surprising body plans",
+   "people": [],
+   "bigNumber": {
+    "value": "3",
+    "label": "hearts per octopus"
+   },
+   "quiz": {
+    "statement": "An octopus has three hearts.",
+    "answer": true
+   },
+   "outlets": 5,
+   "sources": [
+    {
+     "name": "Sample source",
+     "url": "https://kapang.com"
+    }
+   ],
+   "image": null,
+   "sample": true
+  },
+  {
+   "id": "sample-03",
+   "key": "sample-3",
+   "strand": "bizarre",
+   "publishedAt": "2026-09-16T18:01:00Z",
+   "runId": "sample",
+   "headline": "Honey found in ancient tombs was still edible",
+   "caption": "Archaeologists have found pots of honey thousands of years old that had never spoiled.",
+   "body": "Honey is one of the few foods that can last almost forever. Archaeologists exploring ancient Egyptian tombs have found pots of honey that were thousands of years old and still had not spoiled. Honey has very little water and is naturally acidic, which makes it very hard for germs to grow. Bees also add an enzyme that helps protect it.",
+   "keyFacts": [
+    "Thousands of years old",
+    "Low water stops germs",
+    "Bees add a protective enzyme"
+   ],
+   "whyTrending": "A sticky mystery with a scientific answer",
+   "people": [],
+   "bigNumber": {
+    "value": "3,000+",
+    "label": "years in a tomb"
+   },
+   "quiz": {
+    "statement": "Honey spoils after a few months.",
+    "answer": false
+   },
+   "outlets": 4,
+   "sources": [
+    {
+     "name": "Sample source",
+     "url": "https://kapang.com"
+    }
+   ],
+   "image": null,
+   "sample": true
+  },
+  {
+   "id": "sample-04",
+   "key": "sample-4",
+   "strand": "celebrity",
+   "publishedAt": "2026-09-16T17:24:00Z",
+   "runId": "sample",
+   "headline": "Sample Actor Leo Marsh cast in space adventure",
+   "caption": "The fictional star will play a ship captain in a new family film that starts filming this winter.",
+   "body": "This is a sample story. Fictional actor Leo Marsh has been cast as a starship captain in a new family space adventure. Filming begins this winter, and the movie is planned for cinemas the following summer. Leo said on social media that he has wanted to play an astronaut since he was a child. Real celebrity news will replace this once the live feed runs.",
+   "keyFacts": [
+    "Plays a starship captain",
+    "Filming starts this winter",
+    "Cinemas next summer"
+   ],
+   "whyTrending": "A childhood dream role for the star",
+   "people": [
+    "Leo Marsh"
+   ],
+   "bigNumber": null,
+   "quiz": {
+    "statement": "Leo Marsh will play a pirate.",
+    "answer": false
+   },
+   "outlets": 6,
+   "sources": [
+    {
+     "name": "Sample source",
+     "url": "https://kapang.com"
+    }
+   ],
+   "image": null,
+   "sample": true
+  },
+  {
+   "id": "sample-05",
+   "key": "sample-5",
+   "strand": "facts",
+   "publishedAt": "2026-09-16T16:47:00Z",
+   "runId": "sample",
+   "headline": "A day on Venus outlasts its year",
+   "caption": "Venus spins so slowly that one day there is longer than the time it takes to circle the Sun.",
+   "body": "Venus is a planet of extremes. It turns very slowly, taking about 243 Earth days to spin around once. But it only takes about 225 Earth days to travel all the way around the Sun. That means a single day on Venus lasts longer than its whole year. It also spins in the opposite direction to most planets, so the Sun rises in the west.",
+   "keyFacts": [
+    "One spin takes 243 Earth days",
+    "One orbit takes 225 days",
+    "The Sun rises in the west"
+   ],
+   "whyTrending": "Our neighbour planet breaks the usual rules",
+   "people": [],
+   "bigNumber": {
+    "value": "243",
+    "label": "Earth days per spin"
+   },
+   "quiz": {
+    "statement": "On Venus the Sun rises in the west.",
+    "answer": true
+   },
+   "outlets": 3,
+   "sources": [
+    {
+     "name": "Sample source",
+     "url": "https://kapang.com"
+    }
+   ],
+   "image": null,
+   "sample": true
+  },
+  {
+   "id": "sample-06",
+   "key": "sample-6",
+   "strand": "celebrity",
+   "publishedAt": "2026-09-16T16:10:00Z",
+   "runId": "sample",
+   "headline": "Sample Band The Paper Kites wins fan award",
+   "caption": "The fictional band thanked fans after winning Group of the Year at a youth music awards.",
+   "body": "This is a sample story. Fictional band The Paper Kites have won Group of the Year at a youth music awards show. The four-piece thanked their fans on stage and dedicated the award to their old school music teacher. It is the band’s first major award since forming five years ago. Real stories will appear here when the live feed starts.",
+   "keyFacts": [
+    "Group of the Year winners",
+    "Award dedicated to a teacher",
+    "First major award in five years"
+   ],
+   "whyTrending": "A heartfelt thank-you went viral",
+   "people": [
+    "The Paper Kites"
+   ],
+   "bigNumber": null,
+   "quiz": {
+    "statement": "The band dedicated the award to a teacher.",
+    "answer": true
+   },
+   "outlets": 5,
+   "sources": [
+    {
+     "name": "Sample source",
+     "url": "https://kapang.com"
+    }
+   ],
+   "image": null,
+   "sample": true
+  },
+  {
+   "id": "sample-07",
+   "key": "sample-7",
+   "strand": "health",
+   "publishedAt": "2026-09-16T15:33:00Z",
+   "runId": "sample",
+   "headline": "Why yawning is contagious",
+   "caption": "Seeing or even reading about a yawn can trigger one, and scientists think it is linked to empathy.",
+   "body": "Have you yawned yet? Yawning is famously catching. Seeing someone yawn, hearing it or even reading about it can set you off. Scientists think contagious yawning may be linked to how people connect with each other, because we tend to catch yawns more from friends and family than from strangers. Yawning may also help cool the brain. General information, not medical advice.",
+   "keyFacts": [
+    "Reading about yawns can trigger one",
+    "Caught more from people we know",
+    "May help cool the brain"
+   ],
+   "whyTrending": "Did you yawn reading this headline?",
+   "people": [],
+   "bigNumber": null,
+   "quiz": {
+    "statement": "You catch yawns more easily from strangers.",
+    "answer": false
+   },
+   "outlets": 4,
+   "sources": [
+    {
+     "name": "Sample source",
+     "url": "https://kapang.com"
+    }
+   ],
+   "image": null,
+   "sample": true
+  },
+  {
+   "id": "sample-08",
+   "key": "sample-8",
+   "strand": "bizarre",
+   "publishedAt": "2026-09-16T14:56:00Z",
+   "runId": "sample",
+   "headline": "Wombats make cube-shaped droppings",
+   "caption": "The Australian animal is the only one known to produce square poos, and scientists have worked out why.",
+   "body": "Wombats are famous for something unusual: their droppings come out shaped like little cubes. Scientists studied how it happens and found that the walls of a wombat’s gut are stretchy in some places and stiffer in others, which shapes the droppings as they form. Wombats stack them on rocks and logs, possibly to mark their territory and talk to other wombats.",
+   "keyFacts": [
+    "The only known cube-shaped droppings",
+    "Gut walls shape each cube",
+    "Used to mark territory"
+   ],
+   "whyTrending": "Nature’s most surprising shape",
+   "people": [],
+   "bigNumber": null,
+   "quiz": {
+    "statement": "Wombat droppings are shaped like cubes.",
+    "answer": true
+   },
+   "outlets": 4,
+   "sources": [
+    {
+     "name": "Sample source",
+     "url": "https://kapang.com"
+    }
+   ],
+   "image": null,
+   "sample": true
+  },
+  {
+   "id": "sample-09",
+   "key": "sample-9",
+   "strand": "celebrity",
+   "publishedAt": "2026-09-16T14:19:00Z",
+   "runId": "sample",
+   "headline": "Sample Chef Nina Park opens kids cooking school",
+   "caption": "The fictional TV chef has opened a free weekend cooking school for children in her home town.",
+   "body": "This is a sample story. Fictional TV chef Nina Park has opened a free weekend cooking school for children in the town where she grew up. The school will teach simple, healthy recipes and how to grow vegetables. Nina said she learned to cook in her grandmother’s kitchen and wants every child to have that chance. Real stories will replace this soon.",
+   "keyFacts": [
+    "Free weekend classes",
+    "Teaches growing vegetables too",
+    "Inspired by her grandmother"
+   ],
+   "whyTrending": "A feel-good project in her home town",
+   "people": [
+    "Nina Park"
+   ],
+   "bigNumber": null,
+   "quiz": {
+    "statement": "The cooking school charges a fee.",
+    "answer": false
+   },
+   "outlets": 7,
+   "sources": [
+    {
+     "name": "Sample source",
+     "url": "https://kapang.com"
+    }
+   ],
+   "image": null,
+   "sample": true
+  },
+  {
+   "id": "sample-10",
+   "key": "sample-10",
+   "strand": "facts",
+   "publishedAt": "2026-09-16T13:42:00Z",
+   "runId": "sample",
+   "headline": "Bananas are berries but strawberries are not",
+   "caption": "In plant science a berry grows from one flower with seeds inside, which rules strawberries out.",
+   "body": "Here is a fruit fact to surprise your friends. To botanists, a berry is a fruit that grows from a single flower and has its seeds inside. By that rule, bananas, grapes and even tomatoes are berries. Strawberries are not, because their tiny seeds sit on the outside. Raspberries do not count either, since each one is made of many small fruits joined together.",
+   "keyFacts": [
+    "Bananas count as berries",
+    "Strawberry seeds sit outside",
+    "Tomatoes are berries too"
+   ],
+   "whyTrending": "A fruit bowl full of surprises",
+   "people": [],
+   "bigNumber": null,
+   "quiz": {
+    "statement": "A banana is a berry.",
+    "answer": true
+   },
+   "outlets": 3,
+   "sources": [
+    {
+     "name": "Sample source",
+     "url": "https://kapang.com"
+    }
+   ],
+   "image": null,
+   "sample": true
+  },
+  {
+   "id": "sample-11",
+   "key": "sample-11",
+   "strand": "bizarre",
+   "publishedAt": "2026-09-16T13:05:00Z",
+   "runId": "sample",
+   "headline": "Town elects a cat as honorary mayor",
+   "caption": "Residents of a small town voted a friendly local cat as honorary mayor, and it greets visitors daily.",
+   "body": "Some towns choose unusual leaders. Over the years, several small communities have named animals as honorary mayors, including cats, dogs and even a goat. The roles are just for fun and often help raise money for animal charities. One famous cat mayor greeted tourists at a local shop every day for years and became a popular attraction in its own right.",
+   "keyFacts": [
+    "Honorary roles are just for fun",
+    "Often raise money for charity",
+    "Cats, dogs and a goat have served"
+   ],
+   "whyTrending": "Proof that small towns have big personalities",
+   "people": [],
+   "bigNumber": null,
+   "quiz": {
+    "statement": "Animal mayors often help raise money for charity.",
+    "answer": true
+   },
+   "outlets": 3,
+   "sources": [
+    {
+     "name": "Sample source",
+     "url": "https://kapang.com"
+    }
+   ],
+   "image": null,
+   "sample": true
+  },
+  {
+   "id": "sample-12",
+   "key": "sample-12",
+   "strand": "health",
+   "publishedAt": "2026-09-16T12:28:00Z",
+   "runId": "sample",
+   "headline": "Your brain uses a fifth of your energy",
+   "caption": "Although it is only about 2% of body weight, the brain burns around 20% of the energy you use.",
+   "body": "Your brain is a hungry organ. It makes up only about two percent of your body weight, yet it uses roughly twenty percent of the energy your body burns each day. That energy powers billions of nerve cells sending signals to each other. Regular meals, sleep and staying hydrated all help your brain do its job. General information, not medical advice.",
+   "keyFacts": [
+    "About 2% of body weight",
+    "Uses around 20% of energy",
+    "Sleep and water help it work"
+   ],
+   "whyTrending": "A fact that makes a great excuse for breakfast",
+   "people": [],
+   "bigNumber": {
+    "value": "20%",
+    "label": "of your energy"
+   },
+   "quiz": {
+    "statement": "The brain uses about 20% of the body’s energy.",
+    "answer": true
+   },
+   "outlets": 3,
+   "sources": [
+    {
+     "name": "Sample source",
+     "url": "https://kapang.com"
+    }
+   ],
+   "image": null,
+   "sample": true
+  }
+ ],
+ "buzz": {
+  "generatedAt": "2026-09-16T19:55:00Z",
+  "rows": [
+   {
+    "name": "Ava Lumen",
+    "stories": 3,
+    "today": 182000,
+    "avg": 64000,
+    "change": 184,
+    "direction": "rising",
+    "series": [
+     52000,
+     58000,
+     61000,
+     66000,
+     70000,
+     77000,
+     64000,
+     182000
+    ]
+   },
+   {
+    "name": "Leo Marsh",
+    "stories": 2,
+    "today": 91000,
+    "avg": 88000,
+    "change": 3,
+    "direction": "steady",
+    "series": [
+     80000,
+     85000,
+     90000,
+     88000,
+     92000,
+     86000,
+     95000,
+     91000
+    ]
+   },
+   {
+    "name": "The Paper Kites",
+    "stories": 1,
+    "today": 47000,
+    "avg": 21000,
+    "change": 124,
+    "direction": "rising",
+    "series": [
+     18000,
+     20000,
+     19000,
+     22000,
+     24000,
+     21000,
+     23000,
+     47000
+    ]
+   },
+   {
+    "name": "Nina Park",
+    "stories": 2,
+    "today": 30000,
+    "avg": 41000,
+    "change": -27,
+    "direction": "cooling",
+    "series": [
+     45000,
+     47000,
+     44000,
+     40000,
+     38000,
+     36000,
+     37000,
+     30000
+    ]
+   }
+  ]
+ },
+ "quiz": {
+  "generatedAt": "2026-09-16T19:55:00Z",
+  "questions": [
+   {
+    "id": "sample-q0",
+    "storyId": "sample-02",
+    "strand": "facts",
+    "headline": "Octopuses have three hearts and blue blood",
+    "question": "Octopus blood is blue because it uses which metal?",
+    "options": [
+     "Iron",
+     "Copper",
+     "Zinc",
+     "Gold"
+    ],
+    "answer": 1,
+    "explanation": "Copper carries oxygen in octopus blood and turns it blue — it works well in cold, low-oxygen seas."
+   },
+   {
+    "id": "sample-q1",
+    "storyId": "sample-08",
+    "strand": "bizarre",
+    "headline": "Wombats make cube-shaped droppings",
+    "question": "Wombats are native to which country?",
+    "options": [
+     "Brazil",
+     "Australia",
+     "Kenya",
+     "India"
+    ],
+    "answer": 1,
+    "explanation": "Wombats live only in Australia, where they dig long burrows to sleep in during the day."
+   },
+   {
+    "id": "sample-q2",
+    "storyId": "sample-05",
+    "strand": "facts",
+    "headline": "A day on Venus outlasts its year",
+    "question": "Venus is the hottest planet, but which planet is closest to the Sun?",
+    "options": [
+     "Mars",
+     "Mercury",
+     "Earth",
+     "Jupiter"
+    ],
+    "answer": 1,
+    "explanation": "Mercury is closest, but Venus is hotter because its thick clouds trap heat like a blanket."
+   },
+   {
+    "id": "sample-q3",
+    "storyId": "sample-10",
+    "strand": "facts",
+    "headline": "Bananas are berries but strawberries are not",
+    "question": "Botanically speaking, which of these counts as a berry?",
+    "options": [
+     "Strawberry",
+     "Raspberry",
+     "Banana",
+     "Cherry"
+    ],
+    "answer": 2,
+    "explanation": "A banana grows from a single flower with its seeds inside, so botanists call it a berry."
+   },
+   {
+    "id": "sample-q4",
+    "storyId": "sample-03",
+    "strand": "bizarre",
+    "headline": "Honey found in ancient tombs was still edible",
+    "question": "What is a group of honey bees living together called?",
+    "options": [
+     "A pod",
+     "A colony",
+     "A pride",
+     "A flock"
+    ],
+    "answer": 1,
+    "explanation": "Honey bees live in colonies, and one colony can hold tens of thousands of bees."
+   },
+   {
+    "id": "sample-q5",
+    "storyId": "sample-12",
+    "strand": "health",
+    "headline": "Your brain uses a fifth of your energy",
+    "question": "Which part of your body protects your brain?",
+    "options": [
+     "Rib cage",
+     "Skull",
+     "Pelvis",
+     "Kneecap"
+    ],
+    "answer": 1,
+    "explanation": "Your skull is a strong shell of bones that keeps your hard-working brain safe."
+   }
+  ]
+ }
+}

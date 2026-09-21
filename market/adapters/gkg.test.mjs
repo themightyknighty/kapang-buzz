@@ -1,0 +1,271 @@
+import { test } from 'node:test'
+import assert from 'node:assert/strict'
+import { zipSync } from 'fflate'
+import { COL, personsOf, buildPersonIndex, ingestRows, measure, latestFiles, collect, previousWindowUrl } from './gkg.mjs'
+import { byId, activeRoster } from '../roster.mjs'
+
+const swift = byId('taylor-swift')
+const rock = byId('dwayne-johnson')
+const pascal = byId('pedro-pascal')
+const zendaya = byId('zendaya')
+const NOW = Date.parse('2026-09-17T21:45:00Z')
+
+/** A GKG row: 27 tab-separated columns, with the ones we read filled in. */
+function row({ url = 'https://apnews.com/a', source = 'apnews.com', persons = '', enhanced = '' } = {}) {
+  const cols = new Array(27).fill('')
+  cols[COL.date] = '20260917214500'
+  cols[COL.sourceName] = source
+  cols[COL.documentId] = url
+  cols[COL.persons] = persons
+  cols[COL.enhancedPersons] = enhanced
+  return cols.join('\t')
+}
+
+/* ---------------- reading the file ---------------- */
+
+test('the current file comes from GDELT, never from a guessed timestamp', async () => {
+  const listing = [
+    '119543 abc123 http://data.gdeltproject.org/gdeltv2/20260917214500.export.CSV.zip',
+    '88211 def456 http://data.gdeltproject.org/gdeltv2/20260917214500.mentions.CSV.zip',
+    '6402331 ghi789 http://data.gdeltproject.org/gdeltv2/20260917214500.gkg.csv.zip',
+  ].join('\n')
+  const r = await latestFiles(async () => ({ ok: true, text: async () => listing }))
+  assert.ok(r.ok)
+  assert.match(r.gkg.url, /\.gkg\.csv\.zip$/)
+  assert.equal(r.gkg.bytes, 6402331)
+  assert.equal(r.files.length, 3)
+
+  const bad = await latestFiles(async () => ({ ok: false, status: 503 }))
+  assert.equal(bad.ok, false)
+  assert.match(bad.error, /503/)
+})
+
+/* ---------------- person extraction ---------------- */
+
+test('people are read from both person columns and normalised', () => {
+  const names = personsOf(row({ persons: 'Taylor Swift;Travis Kelce', enhanced: 'Zendaya,142;Taylor Swift,88' }).split('\t'))
+  assert.ok(names.has('taylor swift'))
+  assert.ok(names.has('travis kelce'))
+  assert.ok(names.has('zendaya'), 'the enhanced column drops its character offset')
+  assert.equal([...names].filter((n) => n === 'taylor swift').length, 1, 'no duplicates across columns')
+  assert.equal(personsOf(row().split('\t')).size, 0)
+})
+
+test('accented names survive, because GDELT ships latin1 not UTF-8', () => {
+  const names = personsOf(row({ persons: 'Timothée Chalamet' }).split('\t'))
+  assert.ok(names.has('timothee chalamet'), [...names].join('|'))
+})
+
+/* ---------------- the index, and the traps ---------------- */
+
+test('only full names index — a bare surname is not evidence', () => {
+  const index = buildPersonIndex(activeRoster())
+  assert.ok(index.get('dwayne johnson')?.some((c) => c.id === 'dwayne-johnson'))
+  assert.ok(index.get('the rock')?.some((c) => c.id === 'dwayne-johnson'))
+  // "Johnson" alone would match the wrong person the moment GDELT extracts one,
+  // and here there is no surrounding sentence to confirm it from.
+  assert.equal(index.get('johnson'), undefined)
+  assert.equal(index.get('swift'), undefined)
+  assert.equal(index.get('pascal'), undefined)
+  // A one-word celebrity is still indexed, because that IS their whole name.
+  assert.ok(index.get('zendaya')?.some((c) => c.id === 'zendaya'))
+  assert.ok(index.get('adele'))
+})
+
+test('the traps that broke text matching cannot arise here', () => {
+  const roster = [swift, rock, pascal, zendaya]
+  const rows = [
+    row({ persons: 'Taylor Swift', url: 'https://apnews.com/1', source: 'apnews.com' }),
+    row({ persons: 'Boris Johnson', url: 'https://bbc.co.uk/2', source: 'bbc.co.uk' }),
+    row({ persons: 'Blaise Pascal', url: 'https://sciencemag.org/3', source: 'sciencemag.org' }),
+    row({ persons: 'Jonathan Swift', url: 'https://irishtimes.com/4', source: 'irishtimes.com' }),
+    row({ persons: 'Pedro Pascal;Zendaya', url: 'https://variety.com/5', source: 'variety.com' }),
+  ]
+  const { into, articles } = ingestRows(rows, roster)
+  assert.equal(articles, 5)
+  assert.equal(into.get('taylor-swift').docs.size, 1, 'Jonathan Swift is not Taylor Swift')
+  assert.ok(!into.has('dwayne-johnson'), 'Boris Johnson is not The Rock')
+  assert.equal(into.get('pedro-pascal').docs.size, 1, 'Blaise Pascal is not Pedro Pascal')
+  assert.equal(into.get('zendaya').docs.size, 1)
+})
+
+test('one article naming several celebrities counts for each of them', () => {
+  const { into } = ingestRows([row({ persons: 'Zendaya;Taylor Swift', url: 'https://people.com/1' })], [swift, zendaya])
+  assert.equal(into.get('zendaya').docs.size, 1)
+  assert.equal(into.get('taylor-swift').docs.size, 1)
+})
+
+test('the same URL seen twice is one article, not two', () => {
+  const { into } = ingestRows([
+    row({ persons: 'Zendaya', url: 'https://people.com/1' }),
+    row({ persons: 'Zendaya', url: 'https://people.com/1' }),
+  ], [zendaya])
+  assert.equal(into.get('zendaya').docs.size, 1)
+})
+
+test('short or malformed rows are skipped rather than throwing', () => {
+  const { into, articles } = ingestRows(['', 'a\tb\tc', null, row({ persons: 'Zendaya' })], [zendaya])
+  assert.equal(articles, 1)
+  assert.equal(into.get('zendaya').docs.size, 1)
+})
+
+/* ---------------- measurement ---------------- */
+
+test('measure counts articles and publishers, and invents no countries', () => {
+  const { into } = ingestRows([
+    row({ persons: 'Zendaya', url: 'https://apnews.com/1', source: 'apnews.com' }),
+    row({ persons: 'Zendaya', url: 'https://bbc.co.uk/2', source: 'bbc.co.uk' }),
+    row({ persons: 'Zendaya', url: 'https://apnews.com/3', source: 'apnews.com' }),
+  ], [zendaya])
+  const m = measure(into.get('zendaya'), { now: NOW })
+  assert.equal(m.windowMentions, 3)
+  assert.equal(m.uniqueSources, 2)
+  assert.equal(m.uniqueCountries, 0, 'GKG gives no country here — claiming one would be invented')
+  assert.equal(m.largestCluster, 2)
+  assert.ok(m.prominence > 0)
+  assert.equal(m.drivers.length, 3)
+})
+
+test('prominent outlets lift breadth above content farms', () => {
+  const mk = (domains) => {
+    const { into } = ingestRows(domains.map((d, i) => row({ persons: 'Zendaya', url: `https://${d}/${i}`, source: d })), [zendaya])
+    return measure(into.get('zendaya'))
+  }
+  assert.ok(mk(['apnews.com', 'bbc.co.uk', 'nytimes.com']).prominence > mk(['spam1.example', 'spam2.example', 'spam3.example']).prominence)
+})
+
+/* ---------------- the whole collect ---------------- */
+
+const zipOf = (rows) => zipSync({ '20260917214500.gkg.csv': Buffer.from(rows.join('\n'), 'latin1') })
+
+test('collect downloads one file and measures everyone from it', async () => {
+  const listing = '6402331 ghi789 http://data.gdeltproject.org/gdeltv2/20260917214500.gkg.csv.zip'
+  const archive = zipOf([
+    row({ persons: 'Taylor Swift', url: 'https://apnews.com/1', source: 'apnews.com' }),
+    row({ persons: 'Zendaya', url: 'https://variety.com/2', source: 'variety.com' }),
+    row({ persons: 'Mahmoud Abbas', url: 'https://reuters.com/3', source: 'reuters.com' }),
+  ])
+  const seen = []
+  const fetchImpl = async (url) => {
+    seen.push(url)
+    if (url.endsWith('lastupdate.txt')) return { ok: true, text: async () => listing }
+    return { ok: true, arrayBuffer: async () => archive.buffer.slice(archive.byteOffset, archive.byteOffset + archive.byteLength) }
+  }
+  const log = []
+  const r = await collect([swift, zendaya, rock], { now: NOW, fetchImpl, log })
+
+  assert.equal(r.calls, 2, 'the whole roster costs two requests')
+  assert.equal(r.files, 1)
+  assert.equal(r.articles, 3)
+  assert.equal(r.signals.length, 2, 'only the two who appear')
+  assert.ok(!r.signals.some((s) => s.celebrityId === 'dwayne-johnson'))
+  for (const s of r.signals) {
+    assert.equal(s.source, 'news')
+    assert.equal(s.raw, 1, 'raw is THIS window, not a daily total')
+    assert.equal(s.freshnessSeconds, 0)
+    assert.equal(s.series, null)
+  }
+  assert.equal(seen.length, 2)
+  assert.ok(log.join(' ').includes('3 articles'))
+})
+
+test('a failure at any step leaves the run able to continue', async () => {
+  const noListing = await collect([swift], { now: NOW, log: [], fetchImpl: async () => ({ ok: false, status: 500 }) })
+  assert.deepEqual(noListing.signals, [])
+  assert.equal(noListing.files, 0)
+
+  const listing = '1 x http://data.gdeltproject.org/gdeltv2/20260917214500.gkg.csv.zip'
+  const log = []
+  const corrupt = await collect([swift], {
+    now: NOW, log,
+    fetchImpl: async (url) => url.endsWith('lastupdate.txt')
+      ? { ok: true, text: async () => listing }
+      : { ok: true, arrayBuffer: async () => new TextEncoder().encode('not a zip').buffer },
+  })
+  assert.deepEqual(corrupt.signals, [])
+  assert.ok(log.some((l) => l.includes('could not read')))
+})
+
+/* ---------------- an announced file that is not on the CDN yet ---------------- */
+
+test('the previous window is a subtraction, not a guess', () => {
+  const base = 'http://data.gdeltproject.org/gdeltv2/'
+  assert.equal(previousWindowUrl(`${base}20260917220000.gkg.csv.zip`), `${base}20260917214500.gkg.csv.zip`)
+  // Across an hour, a day and a month boundary.
+  assert.equal(previousWindowUrl(`${base}20260917000000.gkg.csv.zip`), `${base}20260916234500.gkg.csv.zip`)
+  assert.equal(previousWindowUrl(`${base}20261001000000.gkg.csv.zip`), `${base}20260930234500.gkg.csv.zip`)
+  assert.equal(previousWindowUrl('nonsense'), null)
+})
+
+test('a window announced but not yet published falls back rather than reading zero', async () => {
+  // This is the real failure: lastupdate.txt named 20260917220000, the CDN
+  // 404d it, and every celebrity in the market went to zero.
+  const listing = '6402331 ghi789 http://data.gdeltproject.org/gdeltv2/20260917220000.gkg.csv.zip'
+  const archive = zipOf([row({ persons: 'Taylor Swift', url: 'https://apnews.com/1', source: 'apnews.com' })])
+  const tried = []
+  const fetchImpl = async (url) => {
+    if (url.endsWith('lastupdate.txt')) return { ok: true, text: async () => listing }
+    tried.push(url.split('/').pop())
+    if (url.includes('20260917220000')) return { ok: false, status: 404 }
+    return { ok: true, arrayBuffer: async () => archive.buffer.slice(archive.byteOffset, archive.byteOffset + archive.byteLength) }
+  }
+  const log = []
+  const r = await collect([swift, zendaya], { now: NOW, fetchImpl, log, sleep: async () => {} })
+
+  assert.equal(r.ok, true, 'the run got a window')
+  assert.equal(r.file, '20260917214500.gkg.csv.zip', 'the one before the missing one')
+  assert.equal(r.signals.length, 1)
+  assert.deepEqual(tried, ['20260917220000.gkg.csv.zip', '20260917220000.gkg.csv.zip', '20260917214500.gkg.csv.zip'],
+    'it retries the newest once before stepping back')
+  assert.ok(log.some((l) => l.includes('not published yet')))
+})
+
+test('a retry alone is enough when the file arrives a moment later', async () => {
+  const listing = '1 x http://data.gdeltproject.org/gdeltv2/20260917220000.gkg.csv.zip'
+  const archive = zipOf([row({ persons: 'Zendaya', url: 'https://variety.com/1', source: 'variety.com' })])
+  let n = 0
+  const r = await collect([zendaya], {
+    now: NOW, log: [], sleep: async () => {},
+    fetchImpl: async (url) => {
+      if (url.endsWith('lastupdate.txt')) return { ok: true, text: async () => listing }
+      return ++n === 1
+        ? { ok: false, status: 404 }
+        : { ok: true, arrayBuffer: async () => archive.buffer.slice(archive.byteOffset, archive.byteOffset + archive.byteLength) }
+    },
+  })
+  assert.equal(r.file, '20260917220000.gkg.csv.zip', 'the newest window, not the fallback')
+  assert.equal(r.signals.length, 1)
+})
+
+test('when no window can be read at all, it says so instead of reporting silence', async () => {
+  const listing = '1 x http://data.gdeltproject.org/gdeltv2/20260917220000.gkg.csv.zip'
+  const log = []
+  const r = await collect([swift], {
+    now: NOW, log, sleep: async () => {},
+    fetchImpl: async (url) => url.endsWith('lastupdate.txt')
+      ? { ok: true, text: async () => listing }
+      : { ok: false, status: 404 },
+  })
+  assert.equal(r.ok, false, 'an unread window is a failure, not an empty market')
+  assert.deepEqual(r.signals, [])
+  assert.match(r.error, /no GKG window could be read/)
+})
+
+test('a window already counted is reported as a repeat, never re-ingested', async () => {
+  const listing = '1 x http://data.gdeltproject.org/gdeltv2/20260917214500.gkg.csv.zip'
+  const archive = zipOf([row({ persons: 'Taylor Swift', url: 'https://apnews.com/1', source: 'apnews.com' })])
+  let downloads = 0
+  const r = await collect([swift], {
+    now: NOW, log: [], sleep: async () => {},
+    alreadyIngested: '20260917214500.gkg.csv.zip',
+    fetchImpl: async (url) => {
+      if (url.endsWith('lastupdate.txt')) return { ok: true, text: async () => listing }
+      downloads++
+      return { ok: true, arrayBuffer: async () => archive.buffer.slice(archive.byteOffset, archive.byteOffset + archive.byteLength) }
+    },
+  })
+  assert.equal(r.repeat, true)
+  assert.equal(r.ok, true, 'a repeat is a known-empty tick, not a failure')
+  assert.deepEqual(r.signals, [], 'nothing is counted a second time')
+  assert.equal(downloads, 1, 'the file is fetched but never ingested twice')
+})
