@@ -223,6 +223,7 @@ export function Header({ feed, market }) {
           <a href="/">Stories</a>
           <a href="/chart" className="chart">Genie 100</a>
           <a href="/market">Market</a>
+          <a href="/exchange">Exchange</a>
           <a href="/quiz">Quiz</a>
           <a href="/watch" className="live"><span className="dot" />Watch</a>
         </nav>

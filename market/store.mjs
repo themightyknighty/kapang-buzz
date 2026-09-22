@@ -9,7 +9,16 @@
  * market outgrows Blobs, this one file is rewritten and the scoring engine,
  * the adapters and the UI are untouched.
  */
+import { countriesIn } from './adapters/gkg.mjs'
 import { RETENTION, SNAPSHOT_INTERVAL_MINUTES } from './config.mjs'
+
+/** Every distinct value of a list-valued field across a day's snapshots. */
+const unionOf = (points = [], key) => {
+  const out = new Set()
+  for (const p of points) for (const v of p?.[key] || []) if (v) out.add(v)
+  return [...out]
+}
+const unionSize = (points, key) => unionOf(points, key).length
 
 export const KEYS = {
   celebrities: 'celebrities.json',
@@ -130,8 +139,27 @@ export function createStore(blobs) {
          * answer at all. Kept from here on; editions before this simply
          * have nulls, which the evidence record handles.
          */
-        sources: Math.max(0, ...points.map((p) => p.uniqueSourceCount || 0)),
-        countries: Math.max(0, ...points.map((p) => p.uniqueCountryCount || 0)),
+        /*
+         * The UNION across the day, not the biggest single window.
+         *
+         * `Math.max` was the bug that made breadth meaningless: one window
+         * sees a name in one or two outlets, so a name covered by twenty
+         * different outlets across a day — one per window, which is exactly
+         * what real coverage looks like — scored one. The whole
+         * corroboration rule sat on top of that number.
+         *
+         * Snapshots written before this carry no domain list, so `max` is
+         * kept as the floor for them and the union takes over as the new
+         * ones accumulate.
+         */
+        sources: Math.max(
+          unionSize(points, 'sourceDomains'),
+          ...points.map((p) => p.uniqueSourceCount || 0),
+        ),
+        countries: Math.max(
+          countriesIn(unionOf(points, 'sourceDomains')),
+          ...points.map((p) => p.uniqueCountryCount || 0),
+        ),
         bestRank: Math.min(...points.map((p) => p.rank ?? Infinity)),
         samples: points.length,
       }

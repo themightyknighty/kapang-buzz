@@ -365,6 +365,23 @@ export function writeAttention(snapshot, { label = null } = {}) {
  * is the only one that is not yet true. Everything else on the site reports
  * something that has already happened.
  */
+/**
+ * A day, as somebody would say it out loud.
+ *
+ * "taken back 7.9 since 2026-09-18" was printed on the front page. A date
+ * stamp is what a database says; a reader wants the day of the week, and
+ * within a week that is both shorter and more use than the date.
+ */
+export function dayName(day, { now = Date.now() } = {}) {
+  const t = Date.parse(`${day}T12:00:00Z`)
+  if (!Number.isFinite(t)) return null
+  const days = Math.round((Date.parse(new Date(now).toISOString().slice(0, 10)) - Date.parse(`${day}T00:00:00Z`)) / 86400000)
+  if (days <= 0) return 'today'
+  if (days === 1) return 'yesterday'
+  if (days < 7) return new Date(t).toLocaleDateString('en-GB', { weekday: 'long', timeZone: 'UTC' })
+  return new Date(t).toLocaleDateString('en-GB', { day: 'numeric', month: 'long', timeZone: 'UTC' })
+}
+
 export function writeRace(race) {
   if (!race?.leader) return null
   if (!race.chaser) {
@@ -381,7 +398,7 @@ export function writeRace(race) {
       : `${leader.displayName} is pulling away`,
     line: [
       `${num(gap)} ${gap === 1 ? 'point' : 'points'} between them`,
-      closing ? `${chaser.displayName} has taken back ${num(closed)} since ${race.since}` : null,
+      closing ? `${chaser.displayName} has taken back ${num(closed)} since ${dayName(race.since) || race.since}` : null,
       // The clock clause tests the WORDS, not the hours: once the week has
       // frozen the hours are a finite negative number and the words are
       // null, which printed "null to go" on the one screen most likely to

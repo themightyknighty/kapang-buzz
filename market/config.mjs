@@ -265,6 +265,17 @@ export const GKG = {
    * in none of them. Attention is the rolling sum of this many windows.
    */
   rollingWindows: num('MKT_GKG_WINDOWS', 96),
+  /**
+   * How many published windows to walk back through when the newest one is
+   * announced but not yet on the CDN.
+   *
+   * It used to try exactly one. GDELT lists a file in lastupdate.txt before
+   * the CDN has it — a known race — and when the window before that is also
+   * missing, which happens, the tick read nothing and published a zero for
+   * the entire market. Four is an hour of news: enough to ride out a gap,
+   * short enough that a tick never reports something stale as now.
+   */
+  fallbackWindows: num('MKT_GKG_FALLBACK', 4),
 }
 
 export const NGRAMS = {

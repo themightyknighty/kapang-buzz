@@ -348,6 +348,9 @@ export async function runMarket({
       mentions, windowMentions,
       uniqueSources: m.uniqueSources ?? prev?.uniqueSources ?? 0,
       uniqueCountries: m.uniqueCountries ?? prev?.uniqueCountries ?? 0,
+      // Carried onto the row so the snapshot can store them and the day can
+      // union them; without this the domain list dies in the adapter.
+      sourceDomains: m.sourceDomains ?? prev?.sourceDomains ?? [],
       rawArticles: m.rawArticles ?? null, largestCluster: m.largestCluster ?? null, matchRate: m.matchRate ?? null,
       deviationZ: newsPart?.z ?? null,
       baselines: { '7d': baselines['7d'], '30d': baselines['30d'], daysOfHistory: baselines.daysOfHistory },
@@ -420,6 +423,10 @@ export async function runMarket({
       breadthScore: r.breadthScore, momentumScore: r.momentum, confidence: r.confidence,
       mentionCount: r.mentions, windowMentions: r.windowMentions, measured: newsRun.ok,
       uniqueSourceCount: r.uniqueSources, uniqueCountryCount: r.uniqueCountries,
+      /* The outlets themselves, so the day can union them rather than keep
+         its biggest quarter of an hour. Bounded: a name in sixty outlets in
+         one window is already as broad as this index can say. */
+      sourceDomains: (r.sourceDomains || []).slice(0, 60),
       wikipediaViews: r.sources?.wikipedia?.value?.raw ?? null,
       rank: r.rank, rankChange: r.rankChange,
       velocity1h: r.velocity1h, acceleration: r.acceleration,

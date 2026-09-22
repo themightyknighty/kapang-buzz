@@ -1,6 +1,6 @@
 import { test } from 'node:test'
 import assert from 'node:assert/strict'
-import { writeLead, writeWeek, writeGap, writeHalfLife, writeAttention, words } from './reportcopy.js'
+import { writeLead, writeWeek, writeGap, writeHalfLife, writeAttention, words, dayName, writeRace } from './reportcopy.js'
 
 const entry = (over = {}) => ({
   id: 'a', slug: 'a', displayName: 'Zendaya', rank: 8, score: 61.3,
@@ -185,4 +185,25 @@ test('the attention report leads on how few people hold half of it', () => {
 test('a report with nothing measured is null rather than an empty page', () => {
   assert.equal(writeGap({ pairs: [] }), null)
   assert.equal(writeAttention({}), null)
+})
+
+test('a day is said the way a person says it, not stamped', () => {
+  /*
+   * "taken back 7.9 since 2026-09-18" went on the front page. Inside a
+   * week the weekday is both shorter and more use than the date.
+   */
+  const now = Date.parse('2026-09-22T09:00:00Z')
+  assert.equal(dayName('2026-09-22', { now }), 'today')
+  assert.equal(dayName('2026-09-21', { now }), 'yesterday')
+  assert.equal(dayName('2026-09-18', { now }), 'Friday')
+  assert.equal(dayName('2026-09-02', { now }), '2 September', 'past a week, a weekday is ambiguous')
+  assert.equal(dayName('rubbish', { now }), null)
+})
+
+test('the race never prints a raw date stamp', () => {
+  const said = writeRace({
+    leader: { displayName: 'A', score: 61 }, chaser: { displayName: 'B', score: 59 },
+    gap: 2, closed: 4, since: '2026-09-18', freezesIn: '3d', frozen: false,
+  })
+  assert.ok(!/\d{4}-\d{2}-\d{2}/.test(said.line), `still stamped: ${said.line}`)
 })

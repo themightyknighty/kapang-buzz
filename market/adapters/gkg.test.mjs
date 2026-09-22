@@ -1,7 +1,7 @@
 import { test } from 'node:test'
 import assert from 'node:assert/strict'
 import { zipSync } from 'fflate'
-import { COL, personsOf, buildPersonIndex, ingestRows, measure, latestFiles, collect, previousWindowUrl, pageTitle, decodeEntities, rowTime, headlines, coverageWeight } from './gkg.mjs'
+import { COL, personsOf, buildPersonIndex, ingestRows, measure, latestFiles, collect, previousWindowUrl, pageTitle, decodeEntities, rowTime, headlines, coverageWeight, countryOf, countriesIn } from './gkg.mjs'
 import { byId, activeRoster } from '../roster.mjs'
 
 const swift = byId('taylor-swift')
@@ -159,7 +159,11 @@ test('measure counts articles and publishers, and invents no countries', () => {
   assert.equal(m.windowMentions, 3, 'worth three passing mentions, none of them about her')
   assert.equal(m.headlineMentions, 0)
   assert.equal(m.uniqueSources, 2)
-  assert.equal(m.uniqueCountries, 0, 'GKG gives no country here — claiming one would be invented')
+  // bbc.co.uk is a ccTLD and apnews.com is not, so one country is known and
+  // one is unknown. Under-reporting is the safe direction for a number the
+  // corroboration rule rests on.
+  assert.equal(m.uniqueCountries, 1, 'read from the outlets, not invented and not hardcoded to zero')
+  assert.deepEqual([...m.sourceDomains].sort(), ['apnews.com', 'bbc.co.uk'], 'the day needs the outlets, not just the count')
   assert.equal(m.largestCluster, 2)
   assert.ok(m.prominence > 0)
   assert.equal(m.drivers.length, 3)
@@ -416,4 +420,64 @@ test('drivers lead on the article they were the subject of', () => {
   assert.equal(drivers[0].title, 'Zendaya takes the lead')
   assert.equal(drivers[0].inHeadline, true)
   assert.equal(drivers[1].inHeadline, false)
+})
+
+/* ---------------- which country's press ---------------- */
+
+test('a ccTLD names a country and a generic one names nothing', () => {
+  assert.equal(countryOf('bbc.co.uk'), 'UK')
+  assert.equal(countryOf('smh.com.au'), 'AU')
+  assert.equal(countryOf('lemonde.fr'), 'FR')
+  assert.equal(countryOf('apnews.com'), null, 'most of the American press is unplaceable, and that is fine')
+  assert.equal(countryOf('theverge.io'), null, 'a startup TLD is not Indian Ocean Territory')
+  assert.equal(countryOf('example.co'), null, 'nor is .co Colombia in practice')
+  assert.equal(countryOf(''), null)
+  assert.equal(countryOf(null), null)
+})
+
+test('counting countries can only ever under-report', () => {
+  /*
+   * The direction matters more than the accuracy. `uniqueCountries` was
+   * hardcoded to zero, so the rule wanting two countries could never pass
+   * and every single name came out flagged thin — a warning that fires
+   * always is a warning nobody reads.
+   */
+  assert.equal(countriesIn(['bbc.co.uk', 'apnews.com', 'lemonde.fr', 'cnn.com']), 2)
+  assert.equal(countriesIn(['bbc.co.uk', 'theguardian.co.uk']), 1, 'two British outlets are one country')
+  assert.equal(countriesIn([]), 0)
+})
+
+test('a run of missing windows is ridden out, not given up on', async () => {
+  /*
+   * The live failure this was written for. GDELT announces a file in
+   * lastupdate.txt before the CDN has it, and when the window before that
+   * is missing too — which happens — the old code tried exactly one step
+   * back and then published a zero for the entire market.
+   */
+  const listing = ['119543 abc http://data.gdeltproject.org/gdeltv2/20260922020000.gkg.csv.zip'].join('\n')
+  const served = '20260922011500.gkg.csv.zip'
+  const tried = []
+  const fetchImpl = async (url) => {
+    if (url.includes('lastupdate')) return { ok: true, text: async () => listing }
+    tried.push(url.split('/').pop())
+    if (!url.endsWith(served)) return { ok: false, status: 404 }
+    return { ok: true, arrayBuffer: async () => zipSync({ 'x.csv': new TextEncoder().encode('') }).buffer }
+  }
+  const r = await collect([byId('zendaya')], { fetchImpl, sleep: async () => {}, now: Date.parse('2026-09-22T02:01:00Z') })
+  assert.ok(tried.includes(served), `walked back to ${served}; tried ${tried.join(', ')}`)
+  assert.equal(r.ok, true, 'a slightly older window beats reading nothing')
+})
+
+test('it still gives up rather than walking back forever', async () => {
+  const listing = '1 a http://data.gdeltproject.org/gdeltv2/20260922020000.gkg.csv.zip'
+  let calls = 0
+  const fetchImpl = async (url) => {
+    if (url.includes('lastupdate')) return { ok: true, text: async () => listing }
+    calls++
+    return { ok: false, status: 404 }
+  }
+  const r = await collect([byId('zendaya')], { fetchImpl, sleep: async () => {}, now: Date.parse('2026-09-22T02:01:00Z') })
+  assert.equal(r.ok, false)
+  assert.ok(calls <= 8, `tried ${calls} times, which is bounded`)
+  assert.match(r.error, /no GKG window/)
 })

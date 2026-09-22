@@ -158,3 +158,37 @@ test('one name’s book cannot overwrite another’s', async () => {
   assert.equal((await store.readPrices('a')).days[0].price, 10)
   assert.equal((await store.readPrices('b')).days[0].price, 99)
 })
+
+test('a day counts every outlet it saw, not its biggest quarter of an hour', async () => {
+  /*
+   * The bug that made breadth meaningless. One window sees a name in one or
+   * two outlets, so `Math.max` across the day scored a name covered by six
+   * different outlets — one per window, which is what real coverage looks
+   * like — as one. The corroboration rule sat entirely on that number.
+   */
+  const store = createStore(memoryBlobs())
+  const at = (h, domains) => ({
+    ...point(Date.UTC(2026, 8, 20, h), 50),
+    uniqueSourceCount: domains.length,
+    sourceDomains: domains,
+  })
+  const day = await store.writeRollupDay('ava-lumen', '2026-09-20', [
+    at(9, ['bbc.co.uk']),
+    at(10, ['apnews.com']),
+    at(11, ['lemonde.fr']),
+    at(12, ['bbc.co.uk']),
+  ])
+  assert.equal(day.sources, 3, 'three distinct outlets across the day, not one per window')
+  assert.equal(day.countries, 2, 'UK and FR; the .com is unplaceable and counts for nothing')
+})
+
+test('snapshots written before domains were kept still report their old figure', async () => {
+  // Older points carry a count and no list. The union would read zero, so
+  // the old maximum stays as the floor until the new ones accumulate.
+  const store = createStore(memoryBlobs())
+  const day = await store.writeRollupDay('ava-lumen', '2026-09-19', [
+    { ...point(Date.UTC(2026, 8, 19, 9), 50), uniqueSourceCount: 4, uniqueCountryCount: 2 },
+  ])
+  assert.equal(day.sources, 4)
+  assert.equal(day.countries, 2)
+})

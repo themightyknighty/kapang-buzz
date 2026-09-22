@@ -139,6 +139,43 @@ export function previousWindowUrl(url) {
 }
 
 /* ------------------------------------------------------------------ *
+ * Where the coverage came from
+ * ------------------------------------------------------------------ */
+
+/*
+ * Two-letter endings that nobody uses to mean the country.
+ *
+ * The rule below reads a two-letter final label as a country code, which is
+ * true of .co.uk and .com.au and false of every startup on .io. Guessing
+ * wrong here inflates the one number the corroboration rule depends on, so
+ * the doubtful ones are counted as unknown rather than as somewhere.
+ */
+const GENERIC_TLD = new Set(['io', 'co', 'tv', 'me', 'ai', 'fm', 'ly', 'to', 'cc', 'gg', 'ws', 'nu', 'sh', 'st', 'cx'])
+
+/**
+ * Which country's press this is, from the domain.
+ *
+ * GKG names the outlet but not its country, and `uniqueCountries` was
+ * hardcoded to zero — so the corroboration rule, which wants two countries
+ * before it will call a rise corroborated, could never pass for anybody.
+ * Every name on the chart came out flagged thin, which made the flag mean
+ * nothing at all.
+ *
+ * A ccTLD is the honest half of the answer: it is certain when present and
+ * absent for .com, which is most of the American press. Unknown is returned
+ * as null and counted as nothing, so this can only ever under-report — the
+ * safe direction for a number a claim rests on.
+ */
+export function countryOf(domain) {
+  const last = String(domain || '').toLowerCase().trim().split('.').pop()
+  if (!last || last.length !== 2 || GENERIC_TLD.has(last)) return null
+  return last.toUpperCase()
+}
+
+/** How many countries' press is in this set of outlets. */
+export const countriesIn = (domains = []) => new Set([...domains].map(countryOf).filter(Boolean)).size
+
+/* ------------------------------------------------------------------ *
  * Coverage of somebody, not a mention of them
  * ------------------------------------------------------------------ */
 
@@ -277,8 +314,21 @@ export function measure(bucket, { now = Date.now() } = {}) {
     /** How much of this was somebody writing ABOUT them. */
     headlineMentions: headlined,
     uniqueSources: bucket.domains.size,
-    // GKG gives no country per article here; claiming one would be invented.
-    uniqueCountries: 0,
+    /*
+     * Read from the outlets' own domains rather than invented. It
+     * under-reports, because .com says nothing — but a number the
+     * corroboration rule rests on should only ever err downwards.
+     */
+    uniqueCountries: countriesIn(bucket.domains),
+    /*
+     * The outlets themselves, not just how many.
+     *
+     * One window sees a name in one or two outlets. The day's rollup used to
+     * keep the BIGGEST single window, so a name covered by twenty outlets
+     * spread across a day scored one. Carrying the names lets the day union
+     * them and answer the question breadth was always asking.
+     */
+    sourceDomains: [...bucket.domains].slice(0, 60),
     prominence: Number(prominence.toFixed(3)),
     largestCluster: Math.max(0, ...[...byDomain.values()].map((v) => v.length)),
     matchRate: 1,
@@ -340,7 +390,14 @@ export async function collect(celebrities, {
   let calls = 1
   let url = listing.gkg.url
   let res = null
-  for (const attempt of ['first', 'retry', 'previous']) {
+  /*
+   * The newest window, then the same one again after a pause, then back
+   * through the published windows one at a time. A tick that reads a
+   * slightly older window is a small inaccuracy; a tick that reads nothing
+   * publishes a zero for every celebrity in the market, which is a lie.
+   */
+  const attempts = ['first', 'retry', ...new Array(Math.max(1, GKG.fallbackWindows)).fill('previous')]
+  for (const attempt of attempts) {
     if (attempt === 'retry') await sleep(retryDelayMs)
     if (attempt === 'previous') {
       const back = previousWindowUrl(url)

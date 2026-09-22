@@ -7,6 +7,7 @@ import { Avatar } from '../screens/Market.jsx'
 import { Sparkline, MovementRow } from './Movement.jsx'
 import { Share } from './Share.jsx'
 import { Countdown } from './Countdown.jsx'
+import { Race } from './Race.jsx'
 
 /**
  * The chart at the top of the front page — the week in progress.
@@ -52,6 +53,10 @@ export function ChartStrip({ count = 10 }) {
           path="/chart/live"
         />
       </div>
+
+      {/* Before the standings, not after: the standings are the state of
+          things and this is the reason to come back to them. */}
+      <Race chart={chart} />
 
       {changes.count > 0 && (
         <p className="b-chart-moved">

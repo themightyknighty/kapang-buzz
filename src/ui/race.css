@@ -1,0 +1,69 @@
+/* ------------------------------------------------------------------
+   The race for number one.
+
+   Sits at the top of the front page and has to read as unfinished, which
+   is the opposite of everything around it. Two faces, the gap between
+   them as the largest figure on the block, and a clock.
+
+   The gap is the hero and it is a number, not a bar: a bar implies a
+   scale a reader has no way to judge, and "2.1 points" against a
+   hundred-point index is something they can hold.
+   ------------------------------------------------------------------ */
+
+.rc {
+  display: grid; gap: 4px;
+  margin: 0 0 20px; padding: 18px 20px;
+  background: var(--deck); border: 1px solid var(--line); border-radius: 14px;
+  border-left: 3px solid var(--ink-faint);
+}
+/* Two points or less is a week genuinely still open, and the only state
+   that earns the accent. Everything else is reporting, not urgency. */
+.rc.tight { border-left-color: var(--gold); }
+.rc.frozen { border-left-color: var(--ink-faint); opacity: .82; }
+
+.rc-kicker {
+  font: 500 11px/1 var(--mono); letter-spacing: .08em; text-transform: uppercase;
+  color: var(--ink-faint);
+}
+.rc.tight .rc-kicker { color: var(--gold); }
+
+.rc-pair {
+  display: grid; grid-template-columns: 1fr auto 1fr;
+  align-items: center; gap: 14px; margin: 12px 0 10px;
+}
+
+.rc-face {
+  display: grid; grid-template-columns: 40px 1fr; grid-template-areas: "a n" "a s";
+  gap: 0 10px; align-items: center; text-decoration: none; color: var(--ink); min-width: 0;
+}
+/* The chaser mirrors, so the two faces read inwards towards the gap
+   rather than both pointing the same way past it. */
+.rc-face:last-child { grid-template-columns: 1fr 40px; grid-template-areas: "n a" "s a"; text-align: right; }
+.rc-face img, .rc-face .m-avatar { grid-area: a; width: 40px; height: 40px; border-radius: 50%; }
+.rc-face-n {
+  grid-area: n; font-weight: 600; font-size: 16px;
+  overflow: hidden; text-overflow: ellipsis; white-space: nowrap;
+}
+.rc-face:hover .rc-face-n { color: var(--kapang); }
+.rc-face-s { grid-area: s; font: 500 13px/1 var(--mono); color: var(--ink-dim); }
+/* Said for screen readers and in the layout, not printed twice. */
+.rc-face-r { position: absolute; width: 1px; height: 1px; overflow: hidden; clip: rect(0 0 0 0); }
+
+.rc-gap { display: grid; justify-items: center; gap: 2px; padding: 0 4px; }
+.rc-gap b { font-family: var(--display); font-size: 40px; line-height: .9; letter-spacing: .01em; }
+.rc.tight .rc-gap b { color: var(--gold); }
+.rc-gap i {
+  font: 500 10px/1 var(--mono); letter-spacing: .08em; text-transform: uppercase;
+  color: var(--ink-faint); font-style: normal;
+}
+
+.rc-head { margin: 0; font-weight: 600; font-size: 17px; }
+.rc-line { margin: 2px 0 0; color: var(--ink-dim); font-size: 14px; }
+.rc-catch { margin: 8px 0 0; color: var(--gold); font-size: 13px; font-weight: 500; }
+
+@media (max-width: 560px) {
+  .rc { padding: 16px; }
+  .rc-pair { gap: 10px; }
+  .rc-gap b { font-size: 32px; }
+  .rc-face-n { font-size: 15px; }
+}
