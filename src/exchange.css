@@ -1,0 +1,124 @@
+/* ------------------------------------------------------------------
+   The Genie Exchange board.
+
+   A trading board has one job the chart does not: to be scannable down a
+   single column. So the money is mono and right-aligned, every row is the
+   same height whatever the name, and the only colour is direction — up,
+   down, or neither. Nothing here is coloured to look exciting.
+
+   Direction uses the app's existing --warm / --cool rather than a fresh
+   green and red: the palette is already validated against the ground, and
+   a market is the last place to introduce a colour pair that a third of
+   people cannot tell apart. Every figure also carries its sign, so the
+   colour is a second reading of something the text already said.
+   ------------------------------------------------------------------ */
+
+.xc { --up: var(--cool); --down: var(--warm); --still: var(--ink-faint); }
+
+.xc-top { padding: 28px 0 8px; }
+.xc-top h1 {
+  font-family: var(--display); font-size: clamp(38px, 7vw, 64px);
+  letter-spacing: .02em; margin: 0; line-height: 1;
+}
+.xc-sub { color: var(--ink-dim); max-width: 56ch; margin: 10px 0 0; }
+
+.xc-state { display: flex; flex-wrap: wrap; gap: 8px; margin: 16px 0 0; }
+.xc-pill {
+  font: 500 12px/1 var(--mono); letter-spacing: .04em; text-transform: uppercase;
+  padding: 7px 10px; border: 1px solid var(--line); border-radius: 999px;
+  color: var(--ink-dim); white-space: nowrap;
+}
+.xc-pill.dim { color: var(--ink-faint); }
+.xc-pill.live { color: var(--ink); border-color: var(--cool-deep); }
+.xc-pill.live .dot {
+  display: inline-block; width: 6px; height: 6px; border-radius: 50%;
+  background: var(--cool); margin-right: 7px; vertical-align: middle;
+}
+
+.xc-note { color: var(--ink-dim); margin: 28px 0 0; max-width: 56ch; }
+.xc-note.dim { color: var(--ink-faint); margin-top: 10px; font-size: 14px; }
+
+/* ---------------- the two movers ---------------- */
+
+.xc-movers { display: grid; grid-template-columns: 1fr 1fr; gap: 12px; margin: 24px 0 0; }
+.xc-mover {
+  display: grid; grid-template-areas: "k p" "n c"; grid-template-columns: 1fr auto;
+  gap: 2px 12px; padding: 14px 16px; text-decoration: none;
+  background: var(--deck); border: 1px solid var(--line); border-radius: 12px;
+  border-left-width: 3px;
+}
+.xc-mover.up { border-left-color: var(--up); }
+.xc-mover.down { border-left-color: var(--down); }
+.xc-mover-k {
+  grid-area: k; font: 500 11px/1 var(--mono); letter-spacing: .06em;
+  text-transform: uppercase; color: var(--ink-faint);
+}
+.xc-mover-n { grid-area: n; color: var(--ink); font-weight: 600; font-size: 18px; }
+.xc-mover-p { grid-area: p; font: 500 12px/1 var(--mono); color: var(--ink-faint); text-align: right; }
+.xc-mover-c { grid-area: c; font: 600 18px/1 var(--mono); text-align: right; }
+
+/* ---------------- sorts ---------------- */
+
+.xc-sorts { display: flex; flex-wrap: wrap; gap: 6px; margin: 24px 0 12px; }
+.xc-sort {
+  font: 500 13px/1 var(--body); padding: 9px 14px; cursor: pointer;
+  background: transparent; color: var(--ink-dim);
+  border: 1px solid var(--line); border-radius: 999px;
+}
+.xc-sort:hover { color: var(--ink); }
+.xc-sort.on { background: var(--deck-2); color: var(--ink); border-color: var(--cool-deep); }
+
+/* ---------------- the board ---------------- */
+
+.xc-board { list-style: none; margin: 0 0 64px; padding: 0; }
+
+.xc-row, .xc-head {
+  display: grid;
+  grid-template-columns: 34px minmax(0, 1fr) 96px 104px 76px 76px;
+  align-items: center; gap: 12px;
+  padding: 10px 8px; border-bottom: 1px solid var(--line);
+}
+.xc-head {
+  font: 500 11px/1 var(--mono); letter-spacing: .06em; text-transform: uppercase;
+  color: var(--ink-faint); border-bottom-color: var(--ink-faint); padding-bottom: 8px;
+}
+.xc-row:hover { background: var(--deck); }
+
+.xc-n { font: 500 13px/1 var(--mono); color: var(--ink-faint); text-align: right; }
+
+.xc-who {
+  display: flex; align-items: center; gap: 10px; min-width: 0;
+  text-decoration: none; color: var(--ink);
+}
+.xc-who img, .xc-who .m-avatar { width: 34px; height: 34px; border-radius: 50%; flex: none; }
+.xc-name { overflow: hidden; text-overflow: ellipsis; white-space: nowrap; font-weight: 600; }
+.xc-who:hover .xc-name { color: var(--kapang); }
+
+.xc-line { display: flex; align-items: center; height: 28px; }
+.xc-new { font: 500 11px/1 var(--mono); color: var(--ink-faint); text-transform: uppercase; }
+
+.xc-price { font: 600 16px/1 var(--mono); text-align: right; white-space: nowrap; }
+/* An indicative price is marked, quietly but always: the difference
+   between a close and a guess is the whole contract with the player. */
+.xc-ind { color: var(--cool); font-style: normal; margin-left: 3px; }
+
+.xc-chg, .xc-since { font: 500 14px/1 var(--mono); text-align: right; }
+.xc-chg.up, .xc-since.up, .xc-mover-c.up { color: var(--up); }
+.xc-chg.down, .xc-since.down, .xc-mover-c.down { color: var(--down); }
+.xc-chg.flat, .xc-since.flat, .xc-mover-c.flat { color: var(--still); }
+
+/* The line takes the app's data hue, the same one the movement charts
+   use, so a price line and a score line are visibly the same kind of
+   object rather than two teams. */
+.xc .mv-spark { --mv-data: #5EC8E8; --mv-still: var(--ink-faint); }
+
+/* ---------------- narrow ---------------- */
+
+@media (max-width: 720px) {
+  .xc-movers { grid-template-columns: 1fr; }
+  /* The fortnight and the listing figure are the first things to go: on a
+     phone the question is "what is it and what did it just do". */
+  .xc-row, .xc-head { grid-template-columns: 26px minmax(0, 1fr) 92px 68px; gap: 10px; }
+  .xc-line, .xc-since { display: none; }
+  .xc-price { font-size: 15px; }
+}

@@ -20,7 +20,7 @@ import { useEffect, useState } from 'react'
  * somebody's messages lands in the right place.
  */
 
-export const ROUTES = ['home', 'chart', 'story', 'market', 'quiz', 'watch', 'vertical', 'strand', 'buzz']
+export const ROUTES = ['home', 'chart', 'story', 'market', 'quiz', 'watch', 'vertical', 'strand', 'buzz', 'exchange']
 
 /** `/story/abc` → `{ name: 'story', arg: 'abc' }`. */
 export function parseRoute(pathname) {

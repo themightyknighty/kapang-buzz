@@ -29,7 +29,7 @@ import * as wikipediaAdapter from './adapters/wikipedia.mjs'
 import * as portraitAdapter from './adapters/portrait.mjs'
 import { pool } from './pool.mjs'
 import { buildLiveChart, partialDay, dayLevel } from './chart.mjs'
-import { settle, quote } from './price.mjs'
+import { settle, quote, refreshQuote } from './price.mjs'
 
 /**
  * Which celebrities need a Wikipedia reading now.
@@ -488,6 +488,12 @@ export async function runMarket({
     log.push(`live chart skipped: ${err.message}`)
   }
 
+  try {
+    await refreshBoard(store, { rows: ranked, histories, now, log })
+  } catch (err) {
+    log.push(`exchange board skipped: ${err.message}`)
+  }
+
   log.push(`published ${ranked.length} rows in ${market.run.seconds}s using ${calls} API calls`)
   return market
 }
@@ -521,6 +527,51 @@ async function writeLiveChart(store, { rows, histories, now, log }) {
   await store.writeLiveChart(live)
   log.push(`live chart: ${live.entries.length} names, ${live.daysCounted} days in, leader ${live.entries[0].displayName}`)
   return live
+}
+
+/**
+ * Move the exchange board on, without reopening the books.
+ *
+ * The books gain a settled close once a day and are never touched
+ * otherwise. The board is what people look at, and a market whose prices
+ * only move at four o'clock looks broken — so this rewrites the indicative
+ * price every run from the close and the baseline already sitting on each
+ * row. One blob read and one write for the whole exchange, rather than a
+ * hundred of each.
+ *
+ * It also means the board exists within fifteen minutes of the first
+ * deploy rather than at three the following morning, which is the
+ * difference between something to look at and something to wait for.
+ */
+async function refreshBoard(store, { rows = [], histories = new Map(), now = Date.now(), log = [] } = {}) {
+  let board = await store.readPriceBoard()
+  if (!board?.names?.length) {
+    /*
+     * First run after the exchange went in. Settling is the daily job's
+     * work and it is not cheap — a rollup read per name — but doing it once
+     * here is the difference between the exchange existing fifteen minutes
+     * after a deploy and existing at three the next morning.
+     */
+    log.push('exchange: no board yet — opening the books')
+    await settlePrices(store, { rows, upTo: dayKey(now - 86400000), log })
+    board = await store.readPriceBoard()
+    if (!board?.names?.length) { log.push('exchange: nobody has enough history to list yet'); return null }
+  }
+
+  const today = dayKey(now)
+  const level = new Map()
+  for (const row of rows) {
+    const h = histories.get(row.id)
+    const partial = h ? partialDay(h.intraday || [], today) : null
+    const l = partial ? dayLevel(partial) : null
+    if (Number.isFinite(l)) level.set(row.id, l)
+  }
+
+  const names = board.names.map((r) => (level.has(r.id) ? refreshQuote(r, level.get(r.id)) : r))
+  names.sort((a, b) => b.price - a.price)
+  await store.writePriceBoard({ ...board, names, refreshedAt: new Date(now).toISOString() })
+  log.push(`exchange: board refreshed, ${level.size}/${names.length} names traded today`)
+  return names
 }
 
 /**
@@ -581,7 +632,10 @@ async function settlePrices(store, { rows = [], upTo, log = [] } = {}) {
       added += book.added
     }
 
-    const q = quote(book)
+    // The history goes in so the row carries the baseline today will be
+    // judged against — see `quote`. Without it the board cannot move
+    // between closes without reopening every book.
+    const q = quote(book, { history })
     if (q) board.push({ id: row.id, slug: row.slug, displayName: row.displayName, imageUrl: row.imageUrl ?? null, ...q })
   })
 

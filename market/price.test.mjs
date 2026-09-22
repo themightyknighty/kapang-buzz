@@ -1,6 +1,6 @@
 import { test } from 'node:test'
 import assert from 'node:assert/strict'
-import { median, expectedLevel, dayReturn, listingPrice, nextPrice, priceSeries, indicativePrice, settle, quote } from './price.mjs'
+import { median, expectedLevel, dayReturn, listingPrice, nextPrice, priceSeries, indicativePrice, settle, quote, refreshQuote } from './price.mjs'
 import { PRICE } from './config.mjs'
 
 /** A run of days at a level, from a fixed start. */
@@ -315,4 +315,35 @@ test('a quote carries what it has done since listing', () => {
 test('a name with no closed days has no quote rather than a nonsense one', () => {
   assert.equal(quote(null), null)
   assert.equal(quote({ days: [] }), null)
+})
+
+test('the board moves on without reopening a hundred books', () => {
+  /*
+   * A page that only moves at the close looks broken; a hundred blob reads
+   * every fifteen minutes to avoid that is a silly price. The close and the
+   * expectation are already on the row, so the day is arithmetic.
+   */
+  const h = days(new Array(20).fill(30))
+  const row = quote(settle(h, null, { upTo: '2026-09-20' }), { history: h })
+  assert.equal(row.settled, true)
+  assert.equal(row.expected, 30, 'the baseline rides along')
+
+  const busy = refreshQuote(row, 90)
+  assert.ok(busy.price > row.close)
+  assert.equal(busy.settled, false)
+  assert.equal(busy.close, row.close, 'the settled close is untouched')
+
+  const quiet = refreshQuote(row, 2)
+  assert.ok(quiet.price < row.close)
+})
+
+test('refreshing a row with no close leaves it exactly as it was', () => {
+  const row = { id: 'x', price: 10 }
+  assert.deepEqual(refreshQuote(row, 50), row)
+  assert.equal(refreshQuote(null, 50), null)
+})
+
+test('the board carries a fortnight of closes to draw', () => {
+  const h = days(Array.from({ length: 40 }, (_, i) => 20 + i))
+  assert.equal(quote(settle(h, null, { upTo: '2026-10-10' }), { history: h }).series.length, 14)
 })

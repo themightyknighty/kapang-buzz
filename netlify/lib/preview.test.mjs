@@ -247,3 +247,20 @@ test('a story card is an article and everything else is a page', () => {
 test('the site name is the site name', () => {
   assert.equal(SITE, 'Gossip Genie')
 })
+
+test('the exchange has its own preview, and never a broken card', () => {
+  /*
+   * A route the page function serves but shareMeta does not know about
+   * falls through to the home page's tags, so a shared exchange link would
+   * describe the news app. The card is the market's on purpose: the board's
+   * own card has to be drawn from the board, which does not exist until the
+   * first settle, and a shared link opening on a broken image is worse than
+   * one opening on a generic but correct picture.
+   */
+  const m = shareMeta({ name: 'exchange', arg: null }, {})
+  assert.equal(m.kind, 'exchange')
+  assert.equal(m.path, '/exchange')
+  assert.match(m.shareTitle, /Genie Exchange/)
+  assert.ok(m.card, 'a preview with no card is a preview nobody clicks')
+  assert.match(m.description, /fantasy money/i, 'the money is not real and the preview says so')
+})

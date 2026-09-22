@@ -230,13 +230,45 @@ export function quote(book, { level = null, history = [], day = null, ...opts } 
   const close = days[days.length - 1] || null
   if (!close) return null
   const live = level == null ? null : indicativePrice(close.price, level, history, { day, ...opts })
+  const price = live?.price ?? close.price
   return {
-    price: live?.price ?? close.price,
+    price,
     close: close.price,
     change: live?.change ?? close.change,
     settled: live ? false : true,
     on: close.day,
     listedAt: book?.listedAt ?? null,
-    sinceListing: book?.listedAt ? round2((((live?.price ?? close.price) - book.listedAt) / book.listedAt) * 1000) / 10 : null,
+    /*
+     * The baseline today is being judged against, carried on the row.
+     *
+     * The board is rewritten every fifteen minutes and the books only once
+     * a day, so without this every refresh would have to open a hundred
+     * books to work out one number that had not changed since breakfast.
+     */
+    expected: live?.expected ?? expectedLevel(history, day, opts),
+    sinceListing: book?.listedAt ? round2(((price - book.listedAt) / book.listedAt) * 1000) / 10 : null,
+    /** The last fortnight of closes, for the line on the board. */
+    series: days.slice(-14).map((d) => ({ day: d.day, price: d.price })),
+  }
+}
+
+/**
+ * Move the board on without reopening the books.
+ *
+ * An exchange page that only moves at the close looks broken, but a
+ * hundred blob reads every fifteen minutes to say so is a silly price to
+ * pay. The settled close and the day's expectation are both already on the
+ * row, so today's indicative price is arithmetic on what is in hand.
+ */
+export function refreshQuote(row, level, opts = {}) {
+  if (!row || !Number.isFinite(row.close)) return row
+  const r = dayReturn(level, row.expected, opts)
+  const price = round2(Math.max(opts.floor ?? PRICE.floor, row.close * (1 + r)))
+  return {
+    ...row,
+    price,
+    change: round2(((price - row.close) / row.close) * 1000) / 10,
+    settled: false,
+    sinceListing: row.listedAt ? round2(((price - row.listedAt) / row.listedAt) * 1000) / 10 : null,
   }
 }

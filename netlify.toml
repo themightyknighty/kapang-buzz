@@ -102,6 +102,17 @@
   to = "/.netlify/functions/market-celebrity/:slug"
   status = 200
 
+# ---- The Genie Exchange ----
+[[redirects]]
+  from = "/api/exchange"
+  to = "/.netlify/functions/exchange"
+  status = 200
+
+[[redirects]]
+  from = "/api/exchange/:slug"
+  to = "/.netlify/functions/exchange/:slug"
+  status = 200
+
 # ---- Sharing ----
 # Share cards. Drawn on demand, cached hard at the edge.
 [[redirects]]
@@ -144,6 +155,11 @@
 [[redirects]]
   from = "/strand/:key"
   to = "/.netlify/functions/page/strand/:key"
+  status = 200
+
+[[redirects]]
+  from = "/exchange"
+  to = "/.netlify/functions/page/exchange"
   status = 200
 
 [[redirects]]

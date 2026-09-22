@@ -171,6 +171,23 @@ const watchPage = (vertical) => ({
   path: vertical ? '/vertical' : '/watch',
 })
 
+/**
+ * The exchange has no card of its own yet, so it borrows the market's.
+ *
+ * A shared link that opens on a broken image is worse than one that opens
+ * on a generic but correct picture of what the page is about — and the
+ * board's own card wants to be drawn from the board, which does not exist
+ * until the first settle.
+ */
+const exchangePage = () => ({
+  kind: 'exchange',
+  title: `The Genie Exchange · ${SITE}`,
+  shareTitle: 'The Genie Exchange',
+  description: 'Every name on the Genie 100, priced on the attention they are getting against their own normal. Fantasy money.',
+  card: '/og/market.png',
+  path: '/exchange',
+})
+
 const quizPage = () => ({
   kind: 'quiz',
   title: `Quiz · ${SITE}`,
@@ -205,6 +222,7 @@ export function shareMeta(route, data = {}) {
   if (name === 'strand' && STRANDS[arg]) return strandPage(arg)
   if (name === 'watch') return watchPage(false)
   if (name === 'vertical') return watchPage(true)
+  if (name === 'exchange') return exchangePage()
   if (name === 'quiz') return quizPage()
   return home()
 }
