@@ -179,3 +179,64 @@ export function indicativePrice(lastClose, todayLevel, history = [], { day = nul
     expected: expected == null ? null : round2(expected),
   }
 }
+
+/**
+ * Add any days that have closed since last time, and never touch the rest.
+ *
+ * `priceSeries` can rebuild a whole history from the rollups at any moment,
+ * which raises the obvious question of why a price book is stored at all.
+ * The answer is that a rollup day is not guaranteed frozen — a late snapshot,
+ * a backfill, a corrected reading — and a market whose past changes when the
+ * source does is not one anybody should be asked to put a portfolio into.
+ * Once a day has closed it is a fact, so it is written once and read forever.
+ *
+ * A name with no book yet is listed and backfilled from everything known
+ * about them, which is what makes an exchange openable on day one rather
+ * than in a fortnight.
+ *
+ * @param {Array<{day:string, level:number}>} history  their rollup, oldest first
+ * @param {object|null} book   what was stored last time
+ * @param {string} upTo        the last day that has CLOSED; today is not settled
+ */
+export function settle(history = [], book = null, { upTo = null, ...opts } = {}) {
+  const closed = history
+    .filter((d) => d && d.day && Number.isFinite(d.level) && (!upTo || d.day <= upTo))
+    .sort((a, b) => (a.day < b.day ? -1 : 1))
+  const had = new Map((book?.days || []).map((d) => [d.day, d]))
+  if (!closed.length) return { ...(book || {}), days: book?.days || [], added: 0 }
+
+  /*
+   * Recomputed in full, then merged so stored days win. Recomputing is what
+   * gets the arithmetic right for the new days — each one needs the whole
+   * run behind it — and the merge is what stops that arithmetic rewriting
+   * anything that has already been traded on.
+   */
+  const fresh = priceSeries(closed, { listAt: book?.listedAt ?? null, ...opts })
+  const days = fresh.map((d) => had.get(d.day) || d)
+  const added = fresh.length - had.size
+
+  return {
+    ...(book || {}),
+    listedAt: book?.listedAt ?? days[0]?.price ?? null,
+    listedOn: book?.listedOn ?? days[0]?.day ?? null,
+    days,
+    added: Math.max(0, added),
+  }
+}
+
+/** The one line the exchange board needs per name. */
+export function quote(book, { level = null, history = [], day = null, ...opts } = {}) {
+  const days = book?.days || []
+  const close = days[days.length - 1] || null
+  if (!close) return null
+  const live = level == null ? null : indicativePrice(close.price, level, history, { day, ...opts })
+  return {
+    price: live?.price ?? close.price,
+    close: close.price,
+    change: live?.change ?? close.change,
+    settled: live ? false : true,
+    on: close.day,
+    listedAt: book?.listedAt ?? null,
+    sinceListing: book?.listedAt ? round2((((live?.price ?? close.price) - book.listedAt) / book.listedAt) * 1000) / 10 : null,
+  }
+}

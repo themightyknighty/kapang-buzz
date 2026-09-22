@@ -1,6 +1,6 @@
 import { test } from 'node:test'
 import assert from 'node:assert/strict'
-import { median, expectedLevel, dayReturn, listingPrice, nextPrice, priceSeries, indicativePrice } from './price.mjs'
+import { median, expectedLevel, dayReturn, listingPrice, nextPrice, priceSeries, indicativePrice, settle, quote } from './price.mjs'
 import { PRICE } from './config.mjs'
 
 /** A run of days at a level, from a fixed start. */
@@ -240,4 +240,79 @@ test('a return that cannot be computed is zero, never NaN', () => {
   assert.equal(dayReturn(NaN, 10), 0)
   const s = priceSeries(days([0, 0, 0, 0]), { smoothing: 0 })
   assert.ok(s.every((p) => Number.isFinite(p.price)), 'no hole anywhere in the series')
+})
+
+/* ================================================================== *
+ * Settling: the past is a fact
+ * ================================================================== */
+
+test('a name with no book is listed and backfilled from everything known', () => {
+  // What makes the exchange openable on day one rather than in a fortnight.
+  const b = settle(days([20, 25, 30, 28]), null, { upTo: '2026-09-04' })
+  assert.equal(b.days.length, 4)
+  assert.equal(b.listedOn, '2026-09-01')
+  assert.equal(b.listedAt, b.days[0].price)
+  assert.equal(b.added, 4)
+})
+
+test('today is not settled — only days that have closed are written', () => {
+  const b = settle(days([20, 25, 30, 28]), null, { upTo: '2026-09-03' })
+  assert.deepEqual(b.days.map((d) => d.day), ['2026-09-01', '2026-09-02', '2026-09-03'])
+})
+
+test('a day that has closed is never rewritten, even if its source changes', () => {
+  /*
+   * The reason a price book is stored at all. Rollups are not frozen — a
+   * late snapshot or a corrected reading can move one — and a market whose
+   * past changes underneath a portfolio is not one anybody should trust.
+   */
+  const first = settle(days([20, 25, 30]), null, { upTo: '2026-09-03' })
+  const corrupted = days([20, 95, 30])           // day two "corrected" upwards
+  const second = settle(corrupted, first, { upTo: '2026-09-03' })
+  assert.deepEqual(second.days.map((d) => d.price), first.days.map((d) => d.price))
+  assert.equal(second.added, 0, 'nothing new closed, so nothing was written')
+})
+
+test('new days are added with the whole run behind them', () => {
+  const h = days([20, 25, 30, 60, 70])
+  const monday = settle(h, null, { upTo: '2026-09-03' })
+  const tuesday = settle(h, monday, { upTo: '2026-09-05' })
+  assert.equal(tuesday.days.length, 5)
+  assert.equal(tuesday.added, 2)
+  // The days it already had are untouched; the new ones priced properly.
+  assert.deepEqual(tuesday.days.slice(0, 3), monday.days)
+  assert.ok(tuesday.days[4].price > tuesday.days[2].price, 'the new run was priced, not stubbed')
+})
+
+test('settling an empty history does not invent a listing', () => {
+  const b = settle([], null, { upTo: '2026-09-03' })
+  assert.deepEqual(b.days, [])
+  assert.equal(b.added, 0)
+})
+
+/* ================================================================== *
+ * The quote the board reads
+ * ================================================================== */
+
+test('a quote is the settled close until the day moves it', () => {
+  const b = settle(days(new Array(20).fill(30)), null, { upTo: '2026-09-20' })
+  const flat = quote(b)
+  assert.equal(flat.settled, true)
+  assert.equal(flat.price, flat.close)
+
+  const live = quote(b, { level: 80, history: days(new Array(20).fill(30)), day: '2026-09-21' })
+  assert.equal(live.settled, false, 'an indicative price must say so')
+  assert.ok(live.price > live.close)
+})
+
+test('a quote carries what it has done since listing', () => {
+  const b = settle(days([20, 30, 40, 50, 60]), null, { upTo: '2026-09-05' })
+  const q = quote(b)
+  assert.equal(q.listedAt, 20)
+  assert.ok(q.sinceListing > 0, `up ${q.sinceListing}% since listing`)
+})
+
+test('a name with no closed days has no quote rather than a nonsense one', () => {
+  assert.equal(quote(null), null)
+  assert.equal(quote({ days: [] }), null)
 })

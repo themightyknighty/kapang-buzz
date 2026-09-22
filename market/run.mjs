@@ -28,7 +28,8 @@ import * as newsAdapter from './adapters/gkg.mjs'
 import * as wikipediaAdapter from './adapters/wikipedia.mjs'
 import * as portraitAdapter from './adapters/portrait.mjs'
 import { pool } from './pool.mjs'
-import { buildLiveChart, partialDay } from './chart.mjs'
+import { buildLiveChart, partialDay, dayLevel } from './chart.mjs'
+import { settle, quote } from './price.mjs'
 
 /**
  * Which celebrities need a Wikipedia reading now.
@@ -543,7 +544,49 @@ export async function runDaily({ blobs, now = Date.now(), fetchImpl = fetch, ros
     id: r.id, rank: r.rank, gossipScore: r.gossipScore, momentum: r.momentum, status: r.status, mentions: r.mentions,
   })))
   await store.updateRecords(market.rows, now)
+  await settlePrices(store, { rows: market.rows, upTo: yesterday, log })
   const pruned = await store.pruneIntraday(roster.map((c) => c.id), now)
   log.push(`daily: rolled up ${yesterday}, pruned ${pruned.removed} old day files`)
   return market
+}
+
+/**
+ * Close the exchange for the day.
+ *
+ * Runs after the rollups, because a price is priced from a finished day and
+ * yesterday's only became one a few lines ago. Each name's book gains the
+ * days that have closed since last time and keeps everything it already had
+ * — see `settle`: once a day is on the board somebody may have traded on it,
+ * so it is a fact rather than a derivation.
+ *
+ * The board is a single snapshot so the exchange page is one read rather
+ * than a hundred, the same trick `charts/latest.json` plays for the chart.
+ */
+async function settlePrices(store, { rows = [], upTo, log = [] } = {}) {
+  const board = []
+  let added = 0
+
+  await pool(rows, 12, async (row) => {
+    const roll = await store.readRollup(row.id)
+    const history = (roll?.days || [])
+      .map((d) => ({ day: d.day, level: dayLevel(d) }))
+      .filter((d) => d.day && Number.isFinite(d.level))
+    if (!history.length) return
+
+    const before = await store.readPrices(row.id)
+    const book = settle(history, before, { upTo })
+    if (!book.days.length) return
+    if (book.added > 0 || !before) {
+      await store.writePrices(row.id, book)
+      added += book.added
+    }
+
+    const q = quote(book)
+    if (q) board.push({ id: row.id, slug: row.slug, displayName: row.displayName, imageUrl: row.imageUrl ?? null, ...q })
+  })
+
+  board.sort((a, b) => b.price - a.price)
+  await store.writePriceBoard({ settledOn: upTo, generatedAt: new Date().toISOString(), names: board })
+  log.push(`exchange: ${board.length} names priced, ${added} new closes settled up to ${upTo}`)
+  return board
 }

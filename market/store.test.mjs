@@ -126,3 +126,35 @@ test('days come back in order however they were written', async () => {
   const rollup = await store.readRollup('x')
   assert.deepEqual(rollup.days.map((d) => d.day), ['2026-09-20', '2026-09-21', '2026-09-22'])
 })
+
+/* ================================================================== *
+ * The exchange
+ * ================================================================== */
+
+test('a price book round-trips, and the board is one read', async () => {
+  const store = createStore(memoryBlobs())
+  assert.equal(await store.readPrices('ava-lumen'), null, 'an unlisted name has no book')
+
+  await store.writePrices('ava-lumen', {
+    listedAt: 20, listedOn: '2026-09-01',
+    days: [{ day: '2026-09-01', price: 20, change: 0 }, { day: '2026-09-02', price: 23.6, change: 18 }],
+  })
+  const book = await store.readPrices('ava-lumen')
+  assert.equal(book.id, 'ava-lumen', 'the book knows whose it is')
+  assert.equal(book.days.length, 2)
+  assert.equal(book.days[1].price, 23.6)
+
+  await store.writePriceBoard({ settledOn: '2026-09-02', names: [{ id: 'ava-lumen', price: 23.6 }] })
+  const board = await store.readPriceBoard()
+  assert.equal(board.names.length, 1)
+  assert.equal(board.settledOn, '2026-09-02')
+})
+
+test('one name’s book cannot overwrite another’s', async () => {
+  // They key off the celebrity id, which never changes once assigned.
+  const store = createStore(memoryBlobs())
+  await store.writePrices('a', { days: [{ day: '2026-09-01', price: 10 }] })
+  await store.writePrices('b', { days: [{ day: '2026-09-01', price: 99 }] })
+  assert.equal((await store.readPrices('a')).days[0].price, 10)
+  assert.equal((await store.readPrices('b')).days[0].price, 99)
+})

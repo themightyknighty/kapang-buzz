@@ -24,6 +24,12 @@ export const KEYS = {
   history: (day) => `history/${day}.json`,
   source: (adapter, id) => `sources/${adapter}/${id}.json`,
 
+  /* The Genie Exchange. One book per name, append-only: a day that has
+     closed has been traded on and is never rewritten. `board` is the
+     one-read snapshot the exchange page and the app need. */
+  prices: (id) => `prices/${id}.json`,
+  priceBoard: 'prices/board.json',
+
   /* The Genie 100. An edition is written once and never again, so its key is
      the week it covers; `latest` is a copy so the front page is one read, and
      `index` is the list of everything published. */
@@ -93,6 +99,12 @@ export function createStore(blobs) {
 
     /* ---------------- daily rollup ---------------- */
     readRollup: (id) => read(KEYS.rollup(id), { id, days: [] }),
+
+    /* ---- the exchange ---- */
+    readPrices: (id) => read(KEYS.prices(id), null),
+    writePrices: (id, book) => write(KEYS.prices(id), { id, ...book }),
+    readPriceBoard: () => read(KEYS.priceBoard, null),
+    writePriceBoard: (board) => write(KEYS.priceBoard, board),
 
     /**
      * Collapse one day of snapshots into a single point. Open/high/low/close
