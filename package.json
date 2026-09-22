@@ -3,7 +3,7 @@
   "version": "0.1.0",
   "private": true,
   "type": "module",
-  "description": "Gossip Genie — family-friendly celebrity, health, facts and bizarre news, 30 stories a day, with a 24/7 Watch screen.",
+  "description": "Gossip Genie \u2014 family-friendly celebrity, health, facts and bizarre news, 30 stories a day, with a 24/7 Watch screen.",
   "scripts": {
     "dev": "vite",
     "build": "vite build",
@@ -14,7 +14,8 @@
     "market:mock": "node scripts/market-local.mjs --mock",
     "market:once": "node scripts/market-local.mjs --all",
     "fonts": "node scripts/fonts-to-ttf.mjs",
-    "cards": "node scripts/card-proof.mjs"
+    "cards": "node scripts/card-proof.mjs",
+    "price:calibrate": "node scripts/price-calibrate.mjs"
   },
   "dependencies": {
     "@fontsource/bebas-neue": "^5.3.0",

@@ -492,3 +492,66 @@ export const MARKET_TABS = [
   { key: 'breaking', label: 'Breaking' },
   ...['film', 'tv', 'music', 'reality', 'sport', 'creators'].map((k) => ({ key: k, label: CATEGORIES[k] })),
 ]
+
+/* ------------------------------------------------------------------ *
+   The exchange
+ * ------------------------------------------------------------------ */
+
+/**
+ * Turning an index into a price.
+ *
+ * The gossip score is bounded 0–100 and mean-reverting, which makes it a
+ * terrible price: buy at 90 and the only direction is down, buy at 10 and you
+ * can barely lose. Every player would converge on "buy the bottom, sell the
+ * top" within a week and the game would be over.
+ *
+ * So the price is a PATH, not a level. It compounds off how much attention a
+ * name is getting RELATIVE TO THEIR OWN NORMAL — which is the same question
+ * the index already answers for the chart, asked of a different denominator.
+ * A megastar who is permanently enormous flatlines; an unknown going from
+ * nowhere to somewhere rockets. That is the game: scouting, not indexing.
+ *
+ * Every number here is a first-principles starting point, not a calibrated
+ * one — at the time of writing the market had four days of history and most
+ * names were at zero. `scripts/price-calibrate.mjs` re-runs the model over
+ * whatever history exists and prints what it does; these want revisiting
+ * once there are weeks rather than days behind them.
+ */
+export const PRICE = {
+  /**
+   * How hard a day's surprise moves the price. The whole model's gain.
+   * At 0.25, a name getting double their usual attention moves about +17%.
+   */
+  k: num('MKT_PRICE_K', 0.25),
+  /**
+   * The most one day may move a price, up or down.
+   *
+   * A cap, not a target: without it a single freak window on a name with
+   * almost no baseline prints a 900% day and the leaderboard is decided by
+   * one lucky tick rather than by judgement.
+   */
+  maxMove: num('MKT_PRICE_MAX_MOVE', 0.18),
+  /**
+   * Added to both sides of the ratio before the logarithm.
+   *
+   * This is what stops a division by nearly zero. Most of the roster is at or
+   * near zero attention on any given day, and (level / expected) on two small
+   * numbers is noise amplified to infinity. Adding a constant makes the ratio
+   * compressive where the numbers are small and transparent where they are
+   * large, which is exactly the behaviour wanted.
+   */
+  smoothing: num('MKT_PRICE_SMOOTHING', 12),
+  /** How many of their own past days set the expectation. */
+  baselineDays: num('MKT_PRICE_BASELINE_DAYS', 14),
+  /** A price never reaches zero: a delisted name is worth something to somebody. */
+  floor: num('MKT_PRICE_FLOOR', 1),
+  /**
+   * What a name lists at.
+   *
+   * Their gossip score on the day they join, floored. It makes the opening
+   * of the exchange explainable in one sentence — "everyone listed at their
+   * score, and the price is where the market has taken them since" — and it
+   * means a cheap name is genuinely cheap rather than arbitrarily so.
+   */
+  listFloor: num('MKT_PRICE_LIST_FLOOR', 10),
+}
