@@ -314,3 +314,14 @@ test('the log says what the week led on', async () => {
   await publishChart({ blobs: w.blobs, weekId: '2026-W38', now: w.now, log })
   assert.match(log.join('\n'), /leading on /)
 })
+
+test('the archive carries what each week was about', async () => {
+  const w = world({ a: { '2026-W38': 80 }, b: { '2026-W38': 40 } })
+  await w.ready
+  await publishChart({ blobs: w.blobs, weekId: '2026-W38', now: w.now })
+
+  const index = await w.store.readChartIndex()
+  const entry = index.editions.find((e) => e.id === '2026-W38')
+  assert.ok(entry.headline, 'the archive would be a column of dates')
+  assert.ok(entry.numberOne, 'and it still knows who was top')
+})

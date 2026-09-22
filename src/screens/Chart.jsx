@@ -6,7 +6,7 @@ import { loadSeen, movesSince, rememberIfStale } from '../lib/lastseen.js'
 import { Avatar } from './Market.jsx'
 import { MovementBlock, MovementRow, Confidence } from '../ui/Movement.jsx'
 import { shareLine } from '../lib/narrative.js'
-import { writeWeek } from '../lib/reportcopy.js'
+import { writeWeek, writeGap, writeHalfLife, writeAttention } from '../lib/reportcopy.js'
 import { Share } from '../ui/Share.jsx'
 import { Countdown } from '../ui/Countdown.jsx'
 import { GenieLockup } from '../brand/Genie.jsx'
@@ -65,11 +65,22 @@ function Edition({ chart, live, changes, index, showArchive, onArchive }) {
   const rest = chart.entries.slice(1)
   const path = live ? '/chart/live' : `/chart/${chart.id}`
 
+  /*
+   * Written once for the whole screen, because two things read it: the story
+   * at the top, and the number one below it, which stops shouting the name a
+   * second time when the headline has already said it.
+   *
+   * Both ids have to be present for that to mean anything — two undefineds
+   * are not a match, and an edition with no lead must keep its hero.
+   */
+  const week = useMemo(() => writeWeek(chart.report, { chartName: CHART.name }), [chart.report])
+  const namedInLead = Boolean(week?.lead?.subject?.id && one?.id && week.lead.subject.id === one.id)
+
   return (
     <div className={`ch${live ? ' live' : ''}`}>
       <Head chart={chart} live={live} changes={changes} path={path} one={one} />
-      <LeadStory report={chart.report} />
-      {one && <NumberOne entry={one} live={live} chart={chart} />}
+      <LeadStory week={week} />
+      {one && <NumberOne entry={one} live={live} chart={chart} named={namedInLead} />}
       <Summary chart={chart} live={live} changes={changes} />
 
       <ol className="ch-list">
@@ -78,6 +89,7 @@ function Edition({ chart, live, changes, index, showArchive, onArchive }) {
         ))}
       </ol>
 
+      <Reports insight={chart.insight} />
       <Method chart={chart} live={live} />
 
       <footer className="ch-foot">
@@ -171,8 +183,7 @@ function Head({ chart, live, changes, path, one }) {
  * headlines itself is the confusion between a standing and an edition that
  * the two states exist to prevent — so this renders nothing there.
  */
-function LeadStory({ report }) {
-  const week = useMemo(() => writeWeek(report, { chartName: CHART.name }), [report])
+function LeadStory({ week }) {
   if (!week) return null
   const { lead, also } = week
 
@@ -211,7 +222,7 @@ function LeadStory({ report }) {
  * which is the cheapest share this site has, because images travel and links
  * do not.
  */
-function NumberOne({ entry, live, chart }) {
+function NumberOne({ entry, live, chart, named = false }) {
   const [cardOk, setCardOk] = useState(true)
   const card = live ? '/og/chart.png' : `/og/chart/${encodeURIComponent(chart.id)}.png`
   return (
@@ -222,7 +233,11 @@ function NumberOne({ entry, live, chart }) {
         </a>
         <div className="ch-one-body">
           <span className="ch-one-rank">{live ? 'Leading' : 'No.1'}</span>
-          <a className="ch-one-name" href={`/market/${entry.slug}`}>{entry.displayName}</a>
+          {/* `said` when the headline above already carried this name: the
+              hero keeps its portrait, its line and its figures, but printing
+              the same name twice in display face 300px apart reads as a
+              mistake rather than as emphasis. */}
+          <a className={`ch-one-name${named ? ' said' : ''}`} href={`/market/${entry.slug}`}>{entry.displayName}</a>
           <p className="ch-one-line">{live ? leadLine(entry) : numberOneLine(entry)}</p>
           {/* The explanation, made of the same numbers as the rank —
               what moved, by how much, and whether it lasted. */}
@@ -346,6 +361,78 @@ function Summary({ chart, live, changes }) {
   )
 }
 
+/**
+ * What the archive knows that a ranking does not.
+ *
+ * A chart answers one question — who is highest — and answers it once a week.
+ * The same readings answer a dozen more, and those are the ones nobody else
+ * can answer at all, because nobody else kept the series: how long a
+ * celebrity story actually lasts, whether the press is writing about people
+ * anybody is looking for, and how much of the world's attention one name
+ * holds.
+ *
+ * Every figure here was computed when the edition was published and stored
+ * with it, so this reads one block off a file the page has already loaded —
+ * no request, no endpoint, and an edition from two years ago still reports
+ * itself. Each report says what it had to work with rather than printing a
+ * confident number from three days of data, and an edition published before
+ * the figures were kept renders nothing at all.
+ */
+function Reports({ insight }) {
+  const reports = useMemo(() => (insight
+    ? [writeAttention(insight), writeGap(insight.gap), writeHalfLife(insight.halfLives)].filter(Boolean)
+    : []), [insight])
+  if (!reports.length) return null
+
+  return (
+    <section className="ch-reports" aria-label="What the archive knows">
+      <h2 className="ch-reports-title">What the archive knows</h2>
+      <p className="ch-reports-note">
+        The same week, asked the questions a ranking cannot answer. Every
+        figure below is derived from readings already stored — nothing here
+        was fetched and nothing was guessed.
+      </p>
+      <div className="ch-reports-grid">
+        {reports.map((report) => <Report key={report.kind} report={report} />)}
+      </div>
+    </section>
+  )
+}
+
+/** One report: the finding, then the evidence under it. */
+function Report({ report }) {
+  return (
+    <article className="ch-report">
+      <p className="ch-report-tag">
+        {report.title}
+        {/* A figure that needs more weeks says so where it is read, not in a
+            footnote. An average over four spikes is a rumour. */}
+        {report.early && <b className="ch-report-early">early</b>}
+      </p>
+      <h3 className="ch-report-head">{report.headline}</h3>
+      {report.standfirst && <p className="ch-report-stand">{report.standfirst}</p>}
+
+      {report.sections.map((section) => (
+        <div className="ch-report-sec" key={section.heading}>
+          <p className="ch-report-sub">{section.heading}</p>
+          {section.note && <p className="ch-report-note">{section.note}</p>}
+          <ul>
+            {section.rows.map((row, i) => (
+              <li key={`${row.name}-${i}`}>
+                {row.slug
+                  ? <a href={`/market/${row.slug}`}>{row.name}</a>
+                  : <span className="ch-report-name">{row.name}</span>}
+                <span className="ch-report-line">{row.line}</span>
+                <b>{row.figure}</b>
+              </li>
+            ))}
+          </ul>
+        </div>
+      ))}
+    </article>
+  )
+}
+
 function Method({ chart, live }) {
   return (
     <details className="ch-method">
@@ -376,14 +463,28 @@ function Archive({ index, current }) {
   if (!index.editions?.length) return <p className="ch-note">No editions have been published yet.</p>
   return (
     <ol className="ch-archive">
-      {index.editions.map((e) => (
-        <li key={e.id} className={e.id === current ? 'on' : ''}>
-          <a href={`/chart/${e.id}`}>
-            <b>{e.label}</b>
-            <span>{e.numberOne ? `No.1 ${e.numberOne.displayName}` : '—'}</span>
-          </a>
-        </li>
-      ))}
+      {index.editions.map((e) => {
+        /*
+         * An archive of dates is a filing cabinet; an archive of stories is a
+         * back catalogue, and the second is the one somebody reads down.
+         * Editions published before the chart decided its own lead carry no
+         * headline and keep the week as their heading, which is what the
+         * whole list used to be.
+         */
+        const sub = [
+          e.headline ? e.label : null,
+          e.numberOne ? `No.1 ${e.numberOne.displayName}` : null,
+        ].filter(Boolean).join(' · ')
+
+        return (
+          <li key={e.id} className={e.id === current ? 'on' : ''}>
+            <a href={`/chart/${e.id}`}>
+              <b>{e.headline || e.label}</b>
+              <span>{sub || '—'}</span>
+            </a>
+          </li>
+        )
+      })}
     </ol>
   )
 }

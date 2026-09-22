@@ -20,7 +20,7 @@ import { createStore } from './store.mjs'
 import { pool } from './pool.mjs'
 import { CHART } from './config.mjs'
 import {
-  buildChart, buildReport, nextRecords, chartWeekFor, weekRange, weekIdAt, nextWeekId, previousWeekId,
+  buildChart, buildReport, leadHeadline, nextRecords, chartWeekFor, weekRange, weekIdAt, nextWeekId, previousWeekId,
 } from './chart.mjs'
 
 /**
@@ -128,7 +128,9 @@ export async function publishChart({
   })
   const edition = { ...built, insight, report }
 
-  const result = await store.publishChart(edition, nextRecords(base, edition), { replace })
+  const result = await store.publishChart(edition, nextRecords(base, edition), {
+    replace, headline: leadHeadline(edition),
+  })
   log.push(
     `chart ${id}: ${edition.summary.charted} entries`
     + `, number one ${edition.summary.numberOne?.displayName || '—'}`

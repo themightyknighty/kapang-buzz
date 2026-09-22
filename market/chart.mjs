@@ -32,6 +32,7 @@ import { storiesAbout } from '../src/lib/movers.js'
 import { buildEvidence } from './evidence.mjs'
 import { snapshot as insightSnapshot } from './insights.mjs'
 import { pickLead } from './lead.mjs'
+import { writeLead } from '../src/lib/reportcopy.js'
 
 const DAY = 86400000
 const WEEK = 7 * DAY
@@ -655,8 +656,32 @@ export function ordinal(n) {
   return `${n}${['th', 'st', 'nd', 'rd'][v % 10] || 'th'}`
 }
 
-/** Every named thing about an edition, for a headline or a share card. */
+/**
+ * What this edition should be called, in one line.
+ *
+ * The week's own headline when it has one. "X is number one" is true every
+ * week and news in about half of them: on a week whose story is a collapse,
+ * a rivalry or the gap between press and public, naming the person at the top
+ * describes the furniture rather than the event.
+ *
+ * Falls back to the number one for the editions published before the chart
+ * started deciding its own lead, and for the ones that carry no report at all.
+ */
 export const headline = (edition) => {
+  const said = leadHeadline(edition)
+  if (said) return said
   const one = edition?.summary?.numberOne
   return one ? `${one.displayName} is number one on ${CHART.name}` : CHART.name
 }
+
+/**
+ * The week's own headline, or null.
+ *
+ * Deliberately without the fallback `headline` carries, because the callers
+ * that want a listing line need to know the difference: an archive row
+ * already prints the number one beside it, so falling back to "X is number
+ * one" would put the same fact on the row twice.
+ */
+export const leadHeadline = (edition) => (
+  writeLead(edition?.report?.lead, { chartName: CHART.name })?.headline || null
+)

@@ -5,7 +5,7 @@ import {
   chartWeekFor, publishAt, weekLabel,
   dayLevel, weekScore, buildChart, nextRecords,
   moveLabel, numberOneLine, ordinal, headline,
-  partialDay, buildLiveChart, freezeAt, buildReport,
+  partialDay, buildLiveChart, freezeAt, buildReport, leadHeadline,
 } from './chart.mjs'
 import { CHART } from './config.mjs'
 import { writeWeek } from '../src/lib/reportcopy.js'
@@ -627,4 +627,22 @@ test('the running order never headlines itself', () => {
   assert.equal(live.report, undefined)
   assert.equal(live.insight, undefined)
   assert.equal(buildChart({ weekId: '2026-W38', ...w }).report, undefined)
+})
+
+test('an edition with no report is still named after its number one', () => {
+  const chart = buildChart({ weekId: '2026-W38', ...world({ a: 80 }) })
+  assert.equal(leadHeadline(chart), null)
+  assert.equal(headline(chart), `A is number one on ${CHART.name}`)
+})
+
+test('an edition with a report is named after what the week was about', () => {
+  const w = world({ a: 80, b: 60, c: 40 })
+  const built = buildChart({ weekId: '2026-W38', ...w })
+  const edition = { ...built, ...buildReport({ edition: built, ...w }) }
+
+  const said = leadHeadline(edition)
+  assert.equal(typeof said, 'string')
+  assert.ok(said.length > 0)
+  // One function, so the share preview and the archive cannot disagree.
+  assert.equal(headline(edition), said)
 })
