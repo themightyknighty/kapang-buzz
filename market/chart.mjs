@@ -30,6 +30,8 @@
 import { CHART } from './config.mjs'
 import { storiesAbout } from '../src/lib/movers.js'
 import { buildEvidence } from './evidence.mjs'
+import { snapshot as insightSnapshot } from './insights.mjs'
+import { pickLead } from './lead.mjs'
 
 const DAY = 86400000
 const WEEK = 7 * DAY
@@ -528,6 +530,74 @@ export function buildChart({
       highestNew: entries.find((e) => e.status === 'new') || null,
       dropped: dropped.length,
     },
+  }
+}
+
+/* ------------------------------------------------------------------ *
+ * What the week was about
+ * ------------------------------------------------------------------ */
+
+/**
+ * The week's story, worked out from the edition that has just been built.
+ *
+ * A chart that publishes and says "here is the chart" is a scoreboard, and a
+ * scoreboard is read once. Three finished modules were already sitting behind
+ * this and reachable from nothing: `insights.mjs` turns the archive into the
+ * dozen figures a ranking does not carry, `lead.mjs` tests every candidate the
+ * data supports and returns the strongest with the two stories under it, and
+ * `milestones.mjs` supplies the records they are measured against. All that
+ * was missing was somebody to call them.
+ *
+ * It is deliberately NOT folded into `buildChart`. A lead is a claim about a
+ * finished week — "X holds number one", "the biggest climb since we started" —
+ * and `buildLiveChart` runs that same builder over a week that is three days
+ * old. A running order that headlines itself is precisely the confusion
+ * between a standing and an edition that the two-state design exists to
+ * prevent, so the report is attached where a week is published and nowhere
+ * else.
+ *
+ * `insight` is kept beside the pick rather than thrown away, because it is the
+ * only thing that makes next year's leads better than this week's: three of
+ * the rules test the present against the weeks before it and can never fire
+ * unless somebody kept the figures. It is a few kilobytes on a file that
+ * already carries a hundred entries with their evidence.
+ *
+ * @param {object}       input
+ * @param {object}       input.edition   the edition just built
+ * @param {object|null}  input.previous  last week's edition
+ * @param {object}       input.records   the running records as they stood BEFORE this edition
+ * @param {Array}        input.rows      the market rows, for the attention figures
+ * @param {object}       input.rollups   id → rollup, for half-lives and volatility
+ * @param {Array}        input.editions  EARLIER editions, oldest first — this one is appended here
+ * @param {Array}        input.history   the `insight` block of those earlier editions, oldest first
+ */
+export function buildReport({
+  edition,
+  previous = null,
+  records = {},
+  rows = [],
+  rollups = {},
+  editions = [],
+  history = [],
+  now = Date.now(),
+} = {}) {
+  // No entries is not a week with a quiet story; it is a week with no chart.
+  if (!edition?.entries?.length) return { insight: null, report: null }
+
+  const insight = insightSnapshot({
+    rows,
+    rollups,
+    edition,
+    previous,
+    // Rivalries read a run of weeks in order and the swap that matters most is
+    // the one that has just happened, so this week goes on the end.
+    editions: [...editions, edition],
+    now,
+  })
+
+  return {
+    insight,
+    report: pickLead({ edition, previous, records, snapshot: insight, history }),
   }
 }
 

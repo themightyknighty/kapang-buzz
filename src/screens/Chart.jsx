@@ -6,6 +6,7 @@ import { loadSeen, movesSince, rememberIfStale } from '../lib/lastseen.js'
 import { Avatar } from './Market.jsx'
 import { MovementBlock, MovementRow, Confidence } from '../ui/Movement.jsx'
 import { shareLine } from '../lib/narrative.js'
+import { writeWeek } from '../lib/reportcopy.js'
 import { Share } from '../ui/Share.jsx'
 import { Countdown } from '../ui/Countdown.jsx'
 import { GenieLockup } from '../brand/Genie.jsx'
@@ -67,6 +68,7 @@ function Edition({ chart, live, changes, index, showArchive, onArchive }) {
   return (
     <div className={`ch${live ? ' live' : ''}`}>
       <Head chart={chart} live={live} changes={changes} path={path} one={one} />
+      <LeadStory report={chart.report} />
       {one && <NumberOne entry={one} live={live} chart={chart} />}
       <Summary chart={chart} live={live} changes={changes} />
 
@@ -144,6 +146,60 @@ function Head({ chart, live, changes, path, one }) {
         )}
       </div>
     </header>
+  )
+}
+
+/**
+ * What the week was about.
+ *
+ * A chart that publishes and says "here is the chart" is a scoreboard, and a
+ * scoreboard is read once. The edition arrives with its lead already decided —
+ * every candidate the data supports, tested, strongest first — so this is the
+ * one thing on the page that says the week MEANT something rather than merely
+ * recording it.
+ *
+ * The English is written here rather than stored, exactly as a row's movement
+ * record is: the edition keeps the numbers and the verdict, every surface
+ * turns them into the same sentence with the same templates, and no two
+ * screens can describe one week differently.
+ *
+ * It sits above the number one because it is the headline and the number one
+ * is the story underneath it. On a week when nothing happened the two agree,
+ * which is what a week when nothing happened looks like.
+ *
+ * A live chart carries no report and never will — a running order that
+ * headlines itself is the confusion between a standing and an edition that
+ * the two states exist to prevent — so this renders nothing there.
+ */
+function LeadStory({ report }) {
+  const week = useMemo(() => writeWeek(report, { chartName: CHART.name }), [report])
+  if (!week) return null
+  const { lead, also } = week
+
+  return (
+    <section className="ch-lead" aria-label="The week’s story">
+      <p className="ch-lead-tag">
+        {lead.tag}
+        {/* The same honesty label the rows carry: a lead the corroboration
+            test could not stand up says so in the tag, where somebody who
+            reads the headline and nothing else has still been told. */}
+        {lead.thin && <b className="ch-lead-thin">Thin</b>}
+      </p>
+      <h2 className="ch-lead-head">{lead.headline}</h2>
+      {lead.standfirst && <p className="ch-lead-stand">{lead.standfirst}</p>}
+      {lead.note && <p className="ch-lead-note">{lead.note}</p>}
+
+      {also.length > 0 && (
+        <ul className="ch-lead-also">
+          {also.map((item, i) => (
+            <li key={`${item.kind}-${i}`}>
+              <b>{item.tag}</b>
+              <span>{item.headline}</span>
+            </li>
+          ))}
+        </ul>
+      )}
+    </section>
   )
 }
 

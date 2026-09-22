@@ -264,3 +264,53 @@ test('the previous week is looked up even when it is not the one before in the i
   assert.equal(forty.edition.entries[0].lastWeek, null)
   assert.equal(forty.edition.entries[0].weeksOn, 2)
 })
+
+/* ------------------------------------------------------------------ *
+ * The week's story
+ * ------------------------------------------------------------------ */
+
+test('an edition goes out with the week\u2019s story attached', async () => {
+  const w = world({ a: { '2026-W38': 80 }, b: { '2026-W38': 40 } })
+  await w.ready
+  const out = await publishChart({ blobs: w.blobs, weekId: '2026-W38', now: w.now })
+
+  assert.ok(out.edition.report?.lead, 'published a scoreboard rather than a story')
+  assert.ok(out.edition.insight, 'the figures the lead was picked from were not kept')
+
+  // In the store, not merely in the return value — the point of deciding it
+  // at publication is that it is frozen into the file.
+  const stored = await w.store.readChart('2026-W38')
+  assert.equal(stored.report.lead.kind, out.edition.report.lead.kind)
+  assert.ok(stored.insight.at)
+})
+
+test('republishing a week reaches the same verdict', async () => {
+  const w = world({
+    a: { '2026-W37': 80, '2026-W38': 50 },
+    b: { '2026-W37': 30, '2026-W38': 90 },
+  })
+  await w.ready
+  const monday = Date.parse('2026-09-21T13:00:00Z')
+  await publishChart({ blobs: w.blobs, weekId: '2026-W37', now: monday - 7 * DAY })
+
+  const first = await publishChart({ blobs: w.blobs, weekId: '2026-W38', now: monday })
+  const again = await publishChart({ blobs: w.blobs, weekId: '2026-W38', now: monday, replace: true })
+
+  /*
+   * The report reads the weeks BEFORE this one, which is what keeps this
+   * true. Were it to read everything in the index it would find the edition
+   * it is currently rewriting, and a chart that quietly re-leads itself on a
+   * re-run is a chart that changed after publication.
+   */
+  assert.equal(again.edition.report.lead.kind, first.edition.report.lead.kind)
+  assert.equal(again.edition.report.lead.entry?.id, first.edition.report.lead.entry?.id)
+  assert.equal(again.edition.report.lead.strength, first.edition.report.lead.strength)
+})
+
+test('the log says what the week led on', async () => {
+  const w = world({ a: { '2026-W38': 80 } })
+  await w.ready
+  const log = []
+  await publishChart({ blobs: w.blobs, weekId: '2026-W38', now: w.now, log })
+  assert.match(log.join('\n'), /leading on /)
+})

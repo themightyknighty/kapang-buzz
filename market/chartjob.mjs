@@ -20,8 +20,20 @@ import { createStore } from './store.mjs'
 import { pool } from './pool.mjs'
 import { CHART } from './config.mjs'
 import {
-  buildChart, nextRecords, chartWeekFor, weekRange, weekIdAt, nextWeekId, previousWeekId,
+  buildChart, buildReport, nextRecords, chartWeekFor, weekRange, weekIdAt, nextWeekId, previousWeekId,
 } from './chart.mjs'
+
+/**
+ * How many earlier editions the report reads.
+ *
+ * The lead picker measures this week against the weeks around it — how much
+ * the chart usually churns, how concentrated attention usually is, who has
+ * been trading places with whom — and not one of those means anything from a
+ * single edition. Eight covers the widest window any rule asks for, with
+ * slack, and it is eight small reads on a job that already reads a hundred
+ * rollups.
+ */
+const REPORT_WINDOW = 8
 
 /**
  * Build and publish one week.
@@ -84,23 +96,63 @@ export async function publishChart({
    */
   const base = already ? await recordsBefore(store, id, records) : records
 
-  const edition = buildChart({
+  const built = buildChart({
     weekId: id, rows, rollups, previous, records: base, stories, size, minDays, now,
   })
 
-  if (!edition.entries.length) {
+  if (!built.entries.length) {
     log.push(`chart ${id}: nobody had ${minDays} days of data — nothing published`)
-    return { id, published: false, reason: 'no eligible entries', edition }
+    return { id, published: false, reason: 'no eligible entries', edition: built }
   }
+
+  /*
+   * What the week was ABOUT, settled before it goes out and frozen into it.
+   * An edition that publishes and says "here is the chart" is a scoreboard,
+   * and this is the difference between a scoreboard and a story.
+   *
+   * `earlier` is the weeks BEFORE this one and nothing else, which is what
+   * keeps a republish honest: it reads what the first run read and reaches
+   * the same verdict, rather than re-leading a two-year-old edition on
+   * everything that has happened since.
+   */
+  const earlier = await recentEditions(store, id)
+  const { insight, report } = buildReport({
+    edition: built,
+    previous,
+    records: base,
+    rows,
+    rollups,
+    editions: earlier,
+    history: earlier.map((e) => e.insight).filter(Boolean),
+    now,
+  })
+  const edition = { ...built, insight, report }
 
   const result = await store.publishChart(edition, nextRecords(base, edition), { replace })
   log.push(
     `chart ${id}: ${edition.summary.charted} entries`
     + `, number one ${edition.summary.numberOne?.displayName || '—'}`
     + `, ${edition.summary.newEntries} new`
+    + `${report?.lead ? `, leading on ${report.lead.kind}` : ''}`
     + `${result.replaced ? ' (replaced)' : ''}`,
   )
   return { id, published: result.written, edition, ...result }
+}
+
+/**
+ * The editions immediately before `id`, oldest first.
+ *
+ * Oldest first because rivalries read a run of weeks in order, and the run has
+ * to end with the week being published for this week's swap to count.
+ */
+async function recentEditions(store, id) {
+  const index = await store.readChartIndex()
+  const wanted = (index.editions || [])
+    .filter((e) => e.id < id)
+    .sort((a, b) => a.id.localeCompare(b.id))
+    .slice(-REPORT_WINDOW)
+  const found = await Promise.all(wanted.map((e) => store.readChart(e.id)))
+  return found.filter(Boolean)
 }
 
 /**

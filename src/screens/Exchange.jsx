@@ -2,6 +2,7 @@ import { useMemo, useState } from 'react'
 import { useExchange } from '../lib/useExchange.js'
 import { Avatar } from './Market.jsx'
 import { Sparkline } from '../ui/Movement.jsx'
+import { dayName } from '../lib/reportcopy.js'
 import '../exchange.css'
 
 /**
@@ -127,7 +128,7 @@ function Shell({ children, settledOn = null, refreshedAt = null, count = 0, move
         {count > 0 && (
           <p className="xc-state">
             <span className="xc-pill">{count} listed</span>
-            {settledOn && <span className="xc-pill">Settled {settledOn}</span>}
+            {settledOn && <span className="xc-pill">Settled {dayName(settledOn) || settledOn}</span>}
             {moved > 0
               ? <span className="xc-pill live"><span className="dot" />{moved} moving — indicative</span>
               : <span className="xc-pill">No trading yet today</span>}
