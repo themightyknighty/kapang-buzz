@@ -25,7 +25,7 @@ import { unzipSync } from 'fflate'
 import { GKG, UA } from '../config.mjs'
 import { norm, domainOf, tierOf } from '../match.mjs'
 import { queryAliases } from '../celebrities.mjs'
-import { TIER_WEIGHT } from '../config.mjs'
+import { TIER_WEIGHT, COVERAGE } from '../config.mjs'
 
 export const meta = { key: 'news', label: 'News coverage (GDELT GKG)', cadenceMinutes: 15, weightGroup: 'news' }
 
@@ -138,6 +138,45 @@ export function previousWindowUrl(url) {
   return url.replace(`${s}.gkg.csv.zip`, `${p}.gkg.csv.zip`)
 }
 
+/* ------------------------------------------------------------------ *
+ * Coverage of somebody, not a mention of them
+ * ------------------------------------------------------------------ */
+
+/**
+ * Does this headline actually name them?
+ *
+ * Only aliases safe enough for a search query are allowed to answer — the
+ * same discipline `queryAliases` enforces everywhere else, and for the same
+ * reason. "Swift" in a headline is as likely to be a bird as a person, and
+ * a headline match is the single heaviest signal here, so it is the last
+ * place to start trusting an ambiguous one.
+ */
+export function headlines(title, celebrity) {
+  const t = norm(title || '')
+  if (!t) return false
+  return queryAliases(celebrity).some((a) => {
+    const name = norm(a.text)
+    // Word-boundary, or "Swifty" counts as "Swift" and "Carrie" as "Carr".
+    return name && new RegExp(`(^|[^a-z0-9])${name.replace(/[.*+?^${}()|[\]\\]/g, '\\$&')}([^a-z0-9]|$)`).test(t)
+  })
+}
+
+/**
+ * How much this one article says about this one person.
+ *
+ * Being in the headline is being the subject. Being one of thirty names in
+ * a round-up is being a footnote, and counting that as a full mention is
+ * what put a listicle at the top of the chart. Both numbers come free with
+ * the row: the title we now parse, and the length of the persons column.
+ *
+ * The split is honest rather than clever — a story about two people gives
+ * each of them half of it — and the headline multiplier does the rest.
+ */
+export function coverageWeight({ inHeadline = false, named = 1 } = {}) {
+  const share = 1 / Math.max(COVERAGE.minNamed, named || 1)
+  return (inHeadline ? COVERAGE.headline : COVERAGE.body) * share * COVERAGE.scale
+}
+
 /** The people an article is about, lowercased and de-duplicated. */
 export function personsOf(cols) {
   const plain = cols[COL.persons] || ''
@@ -187,11 +226,23 @@ export function ingestRows(rows, celebrities, { index = buildPersonIndex(celebri
     articles++
     const url = cols[COL.documentId] || null
     const domain = (cols[COL.sourceName] || domainOf(url || '')).toLowerCase().replace(/^www\./, '')
-    for (const person of personsOf(cols)) {
+    const title = pageTitle(cols)
+    const seenAt = rowTime(cols)
+    // personsOf returns a SET, so .length on it is undefined — which quietly
+    // made every article look like it named one person and switched the
+    // listicle dilution off entirely.
+    const people = [...personsOf(cols)]
+    // How many people this article names, which is how thinly its attention
+    // is spread. A round-up of thirty is not thirty stories.
+    const named = people.length
+    for (const person of people) {
       for (const c of index.get(person) || []) {
         if (!into.has(c.id)) into.set(c.id, { docs: new Map(), domains: new Set() })
         const bucket = into.get(c.id)
-        if (url && !bucket.docs.has(url)) bucket.docs.set(url, { domain, url, title: pageTitle(cols), seenAt: rowTime(cols) })
+        if (url && !bucket.docs.has(url)) {
+          const inHeadline = headlines(title, c)
+          bucket.docs.set(url, { domain, url, title, seenAt, named, inHeadline, weight: coverageWeight({ inHeadline, named }) })
+        }
         if (domain) bucket.domains.add(domain)
       }
     }
@@ -210,8 +261,21 @@ export function measure(bucket, { now = Date.now() } = {}) {
   }
   for (const [domain] of byDomain) prominence += TIER_WEIGHT[tierOf(domain)]
 
+  /*
+   * The number the index is scored on is now the WEIGHT of the coverage,
+   * not the count of it. An article that put them in the headline is worth
+   * four of one that mentioned them halfway down, and a round-up naming
+   * fifteen people is worth a fifteenth of itself to each of them.
+   */
+  const weight = docs.reduce((a, d) => a + (Number.isFinite(d.weight) ? d.weight : coverageWeight(d)), 0)
+  const headlined = docs.filter((d) => d.inHeadline).length
+
   return {
-    windowMentions: docs.length,
+    windowMentions: Math.round(weight * 1000) / 1000,
+    /** What it would have been under the old count-everything rule. */
+    windowArticlesSeen: docs.length,
+    /** How much of this was somebody writing ABOUT them. */
+    headlineMentions: headlined,
     uniqueSources: bucket.domains.size,
     // GKG gives no country per article here; claiming one would be invented.
     uniqueCountries: 0,
@@ -228,7 +292,9 @@ export function measure(bucket, { now = Date.now() } = {}) {
      */
     drivers: [...docs]
       .sort((a, b) => (
-        (b.title ? 1 : 0) - (a.title ? 1 : 0)
+        // Being the subject beats being nameable beats being a big masthead.
+        (b.inHeadline ? 1 : 0) - (a.inHeadline ? 1 : 0)
+        || (b.title ? 1 : 0) - (a.title ? 1 : 0)
         || TIER_WEIGHT[tierOf(b.domain)] - TIER_WEIGHT[tierOf(a.domain)]
       ))
       .slice(0, 10)
@@ -237,6 +303,9 @@ export function measure(bucket, { now = Date.now() } = {}) {
         url: d.url,
         domain: d.domain,
         publishers: 1,
+        /** Were they the subject, or one of the names in it? */
+        inHeadline: Boolean(d.inHeadline),
+        named: Number.isFinite(d.named) ? d.named : null,
         // The row's own window, not the moment the scheduler happened to run.
         firstSeen: new Date(d.seenAt ?? now).toISOString(),
       })),

@@ -1,7 +1,7 @@
 import { test } from 'node:test'
 import assert from 'node:assert/strict'
 import { zipSync } from 'fflate'
-import { COL, personsOf, buildPersonIndex, ingestRows, measure, latestFiles, collect, previousWindowUrl, pageTitle, decodeEntities, rowTime } from './gkg.mjs'
+import { COL, personsOf, buildPersonIndex, ingestRows, measure, latestFiles, collect, previousWindowUrl, pageTitle, decodeEntities, rowTime, headlines, coverageWeight } from './gkg.mjs'
 import { byId, activeRoster } from '../roster.mjs'
 
 const swift = byId('taylor-swift')
@@ -152,7 +152,12 @@ test('measure counts articles and publishers, and invents no countries', () => {
     row({ persons: 'Zendaya', url: 'https://apnews.com/3', source: 'apnews.com' }),
   ], [zendaya])
   const m = measure(into.get('zendaya'), { now: NOW })
-  assert.equal(m.windowMentions, 3)
+  // Three articles, none of which put her in the headline, each naming one
+  // person: body credit (0.25), floored share (1/2). Coverage is weighed
+  // now, not counted — the raw count is kept alongside it.
+  assert.equal(m.windowArticlesSeen, 3, 'three articles were seen')
+  assert.equal(m.windowMentions, 3, 'worth three passing mentions, none of them about her')
+  assert.equal(m.headlineMentions, 0)
   assert.equal(m.uniqueSources, 2)
   assert.equal(m.uniqueCountries, 0, 'GKG gives no country here — claiming one would be invented')
   assert.equal(m.largestCluster, 2)
@@ -195,7 +200,7 @@ test('collect downloads one file and measures everyone from it', async () => {
   assert.ok(!r.signals.some((s) => s.celebrityId === 'dwayne-johnson'))
   for (const s of r.signals) {
     assert.equal(s.source, 'news')
-    assert.equal(s.raw, 1, 'raw is THIS window, not a daily total')
+    assert.equal(s.raw, 1, 'raw is THIS window, weighed rather than counted')
     assert.equal(s.freshnessSeconds, 0)
     assert.equal(s.series, null)
   }
@@ -345,4 +350,70 @@ test('a row too short to have extras still measures, with no headline', () => {
   const [d] = measure(into.get('zendaya')).drivers
   assert.equal(d.title, null, 'no extras column is no headline, not a crash')
   assert.equal(d.firstSeen, '2026-09-17T21:45:00.000Z', 'the date column is still there')
+})
+
+/* ---------------- coverage of somebody, not a mention ---------------- */
+
+test('a headline naming them is worth far more than a passing mention', () => {
+  /*
+   * The whole point. Sampled on the day this went in, four of the top twenty
+   * chart entries had coverage whose headline actually named them — Harry
+   * Styles was third on a Canadian weather report.
+   */
+  const zendaya = byId('zendaya')
+  const subject = ingestRows([row({ persons: 'Zendaya', url: 'https://apnews.com/1', title: 'Zendaya cast in the Dune prequel' })], [zendaya])
+  const passing = ingestRows([row({ persons: 'Zendaya', url: 'https://apnews.com/2', title: 'Ten films to watch this autumn' })], [zendaya])
+  const w = (r) => measure(r.into.get('zendaya')).windowMentions
+  assert.ok(w(subject) >= w(passing) * 4, `${w(subject)} vs ${w(passing)}`)
+  assert.equal(measure(subject.into.get('zendaya')).headlineMentions, 1)
+  assert.equal(measure(passing.into.get('zendaya')).headlineMentions, 0)
+})
+
+test('a round-up naming thirty people is not thirty stories', () => {
+  // A listicle counted once in full for each name is what put one at the
+  // top of the chart. Each of them gets a thirtieth of it.
+  const zendaya = byId('zendaya')
+  const crowd = new Array(30).fill(0).map((_, i) => `Person ${i}`).join(';')
+  const solo = ingestRows([row({ persons: 'Zendaya', url: 'https://x.test/1' })], [zendaya])
+  const listicle = ingestRows([row({ persons: `Zendaya;${crowd}`, url: 'https://x.test/2' })], [zendaya])
+  const w = (r) => measure(r.into.get('zendaya')).windowMentions
+  assert.ok(w(listicle) < w(solo) / 5, `listicle ${w(listicle)} should be far under solo ${w(solo)}`)
+})
+
+test('a two-hander splits rather than dissolves', () => {
+  // Kelce and Swift in one story is half a story each, not a rounding error.
+  const swift = byId('taylor-swift')
+  const r = ingestRows([row({ persons: 'Taylor Swift;Travis Kelce', url: 'https://x.test/1', title: 'Travis Kelce reacts to Taylor Swift sketch' })], [swift])
+  const m = measure(r.into.get('taylor-swift'))
+  assert.equal(m.windowMentions, 4, 'headline credit, halved between the two of them')
+})
+
+test('only aliases safe for a query may match a headline', () => {
+  /*
+   * A headline match is the heaviest signal here, so it is the last place
+   * to start trusting an ambiguous alias. "Swift" is a bird.
+   */
+  const swift = byId('taylor-swift')
+  assert.equal(headlines('Taylor Swift announces tour', swift), true)
+  assert.equal(headlines('Swift action taken by council', swift), false, 'the ambiguous alias must not fire')
+  assert.equal(headlines('', swift), false)
+  assert.equal(headlines(null, swift), false)
+})
+
+test('a headline matches on whole words only', () => {
+  const zendaya = byId('zendaya')
+  assert.equal(headlines('Zendaya wins', zendaya), true)
+  assert.equal(headlines('ZENDAYAS new film', zendaya), false, 'not a prefix match')
+})
+
+test('drivers lead on the article they were the subject of', () => {
+  const zendaya = byId('zendaya')
+  const { into } = ingestRows([
+    row({ persons: 'Zendaya', url: 'https://x.test/1', title: 'Ten films to watch' }),
+    row({ persons: 'Zendaya', url: 'https://x.test/2', title: 'Zendaya takes the lead' }),
+  ], [zendaya])
+  const { drivers } = measure(into.get('zendaya'))
+  assert.equal(drivers[0].title, 'Zendaya takes the lead')
+  assert.equal(drivers[0].inHeadline, true)
+  assert.equal(drivers[1].inHeadline, false)
 })

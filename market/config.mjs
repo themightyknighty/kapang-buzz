@@ -555,3 +555,47 @@ export const PRICE = {
    */
   listFloor: num('MKT_PRICE_LIST_FLOOR', 10),
 }
+
+/**
+ * What counts as coverage OF somebody, rather than a mention of them.
+ *
+ * GKG reports every person named anywhere in an article, which is not the
+ * same question the index is asking. Sampling the live chart the day the
+ * headlines went in: of the top twenty names, four had coverage whose
+ * headline actually named them. Harry Styles was third on the chart on the
+ * strength of a Canadian weather report; Sabrina Carpenter and Ariana Grande
+ * were both credited with the same Taylor Swift article; a listicle naming
+ * fifteen celebrities was counted once in full for each of them.
+ *
+ * Both of the numbers needed to fix that were already in the file and
+ * already being thrown away: the headline, and how many people the article
+ * names. Being in the headline is being the subject; being one of thirty
+ * names is being a footnote.
+ */
+export const COVERAGE = {
+  /** Credit for an article whose headline names them. */
+  headline: num('MKT_COVER_HEADLINE', 1),
+  /** Credit for a name that appears only in the body. */
+  body: num('MKT_COVER_BODY', 0.25),
+  /**
+   * Below this many names, an article is about its subjects; above it, the
+   * dilution does the work on its own. Kept as a floor rather than a cliff
+   * so a two-hander is not treated as a round-up.
+   */
+  minNamed: num('MKT_COVER_MIN_NAMED', 2),
+  /**
+   * The unit, chosen for continuity rather than meaning.
+   *
+   * Baselines are rebuilt every run from up to thirty days of stored
+   * readings. Switching from "articles counted" to "coverage weighed"
+   * without this would have every name measured against a month of numbers
+   * on a different scale, and the whole market would read as collapsing for
+   * weeks until the history rolled over.
+   *
+   * At 8, a passing mention in a two-hander scores 1 — exactly what one
+   * article used to be worth — and being the subject of that story scores 4.
+   * Nothing is deflated; the weighting is entirely relative, which is the
+   * only part that was ever the point.
+   */
+  scale: num('MKT_COVER_SCALE', 8),
+}
