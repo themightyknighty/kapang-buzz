@@ -9,7 +9,7 @@ import { shareLine } from '../lib/narrative.js'
 import { writeWeek, writeGap, writeHalfLife, writeAttention } from '../lib/reportcopy.js'
 import { Share } from '../ui/Share.jsx'
 import { Countdown } from '../ui/Countdown.jsx'
-import { GenieLockup } from '../brand/Genie.jsx'
+import { SurfaceNav } from '../ui/SurfaceNav.jsx'
 import { ago } from '../lib/time.js'
 
 /**
@@ -112,8 +112,8 @@ function Edition({ chart, live, changes, index, showArchive, onArchive }) {
 function Head({ chart, live, changes, path, one }) {
   return (
     <header className="ch-head">
+      <SurfaceNav current="chart" />
       <div className="ch-head-row">
-        <a href="/" className="ch-mark" aria-label="Gossip Genie home"><GenieLockup descriptor="Gossip" height={26} /></a>
         <h1 className="ch-title">{CHART.name}</h1>
         <div className="ch-head-right">
           <Share
@@ -515,8 +515,8 @@ function NotYet({ info, weekId, live }) {
 const Shell = ({ children, live }) => (
   <div className={`ch${live ? ' live' : ''}`}>
     <header className="ch-head">
+      <SurfaceNav current="chart" />
       <div className="ch-head-row">
-        <a href="/" className="ch-mark" aria-label="Gossip Genie home"><GenieLockup descriptor="Gossip" height={26} /></a>
         <h1 className="ch-title">{CHART.name}</h1>
       </div>
       <nav className="ch-states" aria-label="Which chart">

@@ -30,7 +30,6 @@
 /* ---------------- header ---------------- */
 .ch-head{padding:18px var(--pad) 0}
 .ch-head-row{display:flex;align-items:center;gap:16px;flex-wrap:wrap}
-.ch-mark{line-height:0;text-decoration:none;flex:none}
 .ch-title{font-family:var(--display);font-weight:400;font-size:clamp(26px,4vw,40px);
   line-height:1;margin:0;letter-spacing:.02em;color:#fff}
 .ch-head-right{margin-left:auto;display:flex;align-items:center;gap:12px}

@@ -24,6 +24,11 @@
 .mkt *{font-variant-numeric:tabular-nums}
 
 /* ---------------- header ---------------- */
+/* The section bar sits above the sticky header and outside its padding, so
+   it is given the same gutter rather than running to the window edge. The
+   chart and the exchange inherit theirs from the wrapper they sit in. */
+.mkt > .sn{padding-left:20px;padding-right:20px}
+
 .mkt-head{position:sticky;top:0;z-index:20;background:linear-gradient(180deg,var(--abyss) 72%,rgba(5,11,20,.92));
   border-bottom:1px solid var(--line);padding:14px 20px 0}
 .mkt-head-top{display:flex;align-items:center;gap:20px;flex-wrap:wrap}

@@ -1,5 +1,6 @@
 import { useEffect, useLayoutEffect, useRef, useState } from 'react'
 import { STRANDS } from './lib/strands.js'
+import { NAV } from './lib/nav.js'
 import { GenieLockup } from './brand/Genie.jsx'
 import { Notices } from './ui/Notices.jsx'
 import { longDate } from './lib/time.js'
@@ -212,20 +213,28 @@ export const Arrow = ({ direction }) => (
   </span>
 )
 
-export function Header({ feed, market }) {
+export function Header({ feed, market, current = null }) {
   return (
     <header className="b-head">
       <div className="b-wrap b-head-row">
         <a href="/" className="b-title" aria-label="Gossip Genie home">
           <GenieLockup descriptor="Gossip" height={38} />
         </a>
+        {/* One list, shared with the slim bar the chrome-less surfaces
+            carry, so a destination cannot exist on one and not the other. */}
         <nav className="b-nav">
-          <a href="/">Stories</a>
-          <a href="/chart" className="chart">Genie 100</a>
-          <a href="/market">Market</a>
-          <a href="/exchange">Exchange</a>
-          <a href="/quiz">Quiz</a>
-          <a href="/watch" className="live"><span className="dot" />Watch</a>
+          {NAV.map((item) => (
+            <a
+              key={item.section}
+              href={item.href}
+              className={[item.tone, item.live && 'live', item.section === current && 'on']
+                .filter(Boolean).join(' ') || undefined}
+              aria-current={item.section === current ? 'page' : undefined}
+            >
+              {item.live && <span className="dot" />}
+              {item.label}
+            </a>
+          ))}
         </nav>
         {/* Outside the nav on purpose: the nav styles every anchor inside it
             as a tracked-out uppercase link, which is not what a panel full of

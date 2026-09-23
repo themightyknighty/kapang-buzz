@@ -1,6 +1,7 @@
 import { useEffect } from 'react'
 import { useFeed, isStale } from './lib/useFeed.js'
 import { useRoute, navigate } from './lib/useRoute.js'
+import { sectionOf } from './lib/nav.js'
 import { Header, Footer } from './components.jsx'
 import Home from './screens/Home.jsx'
 import Story from './screens/Story.jsx'
@@ -50,7 +51,7 @@ export default function App() {
 
   return (
     <div className="b-app">
-      <Header feed={feed} market={market} />
+      <Header feed={feed} market={market} current={sectionOf(route.name)} />
       {isStale(feed) && (
         <div className="b-stale">Stories last updated {ago(feed.generatedAt)} — the next update is running late.</div>
       )}

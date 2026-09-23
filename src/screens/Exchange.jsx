@@ -3,6 +3,7 @@ import { useExchange } from '../lib/useExchange.js'
 import { Avatar } from './Market.jsx'
 import { Sparkline } from '../ui/Movement.jsx'
 import { dayName } from '../lib/reportcopy.js'
+import { SurfaceNav } from '../ui/SurfaceNav.jsx'
 import '../exchange.css'
 
 /**
@@ -118,6 +119,7 @@ export default function Exchange() {
 function Shell({ children, settledOn = null, refreshedAt = null, count = 0, moved = 0 }) {
   return (
     <div className="b-wrap xc">
+      <SurfaceNav current="exchange" />
       <header className="xc-top">
         <h1>The Genie Exchange</h1>
         <p className="xc-sub">

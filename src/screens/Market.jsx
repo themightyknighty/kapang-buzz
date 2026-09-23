@@ -12,7 +12,7 @@
 import { useEffect, useMemo, useRef, useState } from 'react'
 import { MARKET_TABS, STATUS_TONE, CATEGORIES } from '../../market/config.mjs'
 import { filterTab } from '../../market/rank.mjs'
-import { GenieLockup } from '../brand/Genie.jsx'
+import { SurfaceNav } from '../ui/SurfaceNav.jsx'
 import { sinceLabel, signed, dirOf } from '../lib/useMarket.js'
 import { marketMovers } from '../lib/movers.js'
 import { WhyLine } from '../ui/Why.jsx'
@@ -250,16 +250,15 @@ export default function Market({ market, feed }) {
         </div>
       )}
 
+      <SurfaceNav current="market" />
       <header className="mkt-head">
         <div className="mkt-head-top">
-          <GenieLockup descriptor="Gossip" height={30} />
           <h1 className="mkt-title">Celebrity Market</h1>
           <span className="mkt-sub">Attention index</span>
           <div className="mkt-head-right">
             <span className="mkt-live"><i />Live</span>
             <span>Updated {sinceLabel(fresh)}{nextIn > 0 ? ` · next in ${nextIn}m` : ''}</span>
             <Share {...marketShare(movers)} label="Share the board" />
-            <a className="mkt-back" href="/">← Stories</a>
           </div>
         </div>
         <div className="mkt-strip">
