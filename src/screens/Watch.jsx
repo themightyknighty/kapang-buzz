@@ -24,6 +24,8 @@
  */
 import { useEffect, useMemo, useRef, useState } from 'react'
 import { buildRundown, freshStories, storyIdsOf } from '../lib/rundown.js'
+import { loadPrefs } from '../lib/prefs.js'
+import { normaliseMix } from '../lib/mix.js'
 import { STRANDS } from '../lib/strands.js'
 import { ago, clock, longDate } from '../lib/time.js'
 import { LowerThird } from '../ui/LowerThird.jsx'
@@ -964,7 +966,14 @@ export default function Watch({ feed, market, format = 'auto' }) {
   const liveChart = useChart('live')
   const publishedChart = useChart()
   const chart = liveChart.chart || publishedChart.chart || null
-  const rundown = (f, c) => buildRundown(withBulletin(f), { durations: F.durations, chart: c })
+  /*
+   * The reader's mix follows them onto the channel. Read once on mount
+   * rather than watched: the running order is a half-hour programme and
+   * reshuffling it under somebody mid-story is worse than honouring a
+   * setting from thirty seconds ago.
+   */
+  const mix = useMemo(() => normaliseMix(loadPrefs().mix), [])
+  const rundown = (f, c) => buildRundown(withBulletin(f), { durations: F.durations, chart: c, mix })
   const feedRef = useRef(feed)
   feedRef.current = feed
   const moversRef = useRef(movers)

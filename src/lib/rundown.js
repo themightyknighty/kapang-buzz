@@ -22,6 +22,8 @@
  * empty countdown. A channel with no chart is still a channel.
  */
 
+import { mixStories, DEFAULT_MIX } from './mix.js'
+
 export const DUR = {
   open: 15,
   top: 60,
@@ -107,7 +109,7 @@ export const rotate = (list, by) => (list.length ? [...list.slice(by % list.leng
  * @param {object} opts
  * @param {object} [opts.chart]  a Genie 100 edition — live or published
  */
-export function buildRundown(feed, { now = Date.now(), hour = new Date(now).getHours(), durations = {}, chart = null } = {}) {
+export function buildRundown(feed, { now = Date.now(), hour = new Date(now).getHours(), durations = {}, chart = null, mix = DEFAULT_MIX } = {}) {
   const D = { ...DUR, ...durations }
   const all = (feed?.stories || []).slice().sort((a, b) => Date.parse(b.publishedAt) - Date.parse(a.publishedAt))
   if (!all.length) return []
@@ -128,7 +130,17 @@ export function buildRundown(feed, { now = Date.now(), hour = new Date(now).getH
   const loop = Math.floor(now / 1800000)
   const question = questions.length ? questions[loop % questions.length] : null
 
-  const block = rotate(orderStories(rest.slice(0, STORY_BLOCK), hour), loop)
+  /*
+   * The reader's mix chooses the pool; the show clock still paces it.
+   *
+   * They do not fight: `orderStories` alternates celebrity against the rest
+   * and falls through to whichever queue still has stories, so a mix of
+   * celebrity-only produces an all-celebrity block without the alternation
+   * having to be disabled. Applied before the slice, so the proportion holds
+   * across the nine stories a half hour has room for rather than across the
+   * thirty it does not reach.
+   */
+  const block = rotate(orderStories(mixStories(rest, mix).slice(0, STORY_BLOCK), hour), loop)
   const entries = (chart?.entries || []).slice(0, COUNTDOWN)
 
   const bulletin = feed?.bulletin?.videoUrl ? feed.bulletin : null
