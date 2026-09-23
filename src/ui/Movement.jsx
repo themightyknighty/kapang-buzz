@@ -27,7 +27,7 @@
  * those two are not faults to fix.
  */
 import {
-  explain, rowLine, thinLine, confidenceLabel, sizeOf, num, weekCaption,
+  explain, rowLine, confidenceLabel, sizeOf, num, weekCaption,
 } from '../lib/narrative.js'
 
 const VIEW = { w: 220, h: 48 }
@@ -126,13 +126,6 @@ export function DriverBars({ drivers = [], compact = false }) {
       ))}
     </ul>
   )
-}
-
-/** The honesty label — a rise nobody else noticed, said plainly. */
-export function ThinTag({ record }) {
-  const line = thinLine(record)
-  if (!line) return null
-  return <p className="mv-thin"><b>Thin</b>{line}</p>
 }
 
 /** How much the week rests on, as a word rather than a sentence. */

@@ -17,6 +17,7 @@ import { KEYS } from '../../pipeline/run.mjs'
 import { createStore } from '../../market/store.mjs'
 import { storyCard, celebrityCard, marketCard, chartCard, movementCard, siteCard, toPng, inlineImage } from '../lib/card.mjs'
 import { moveFor, CHART } from '../lib/preview.mjs'
+import { leadHeadline } from '../../market/chart.mjs'
 import { cardRoute } from '../lib/pagemeta.mjs'
 import { marketMovers } from '../../src/lib/movers.js'
 import { shareLine } from '../../src/lib/narrative.js'
@@ -70,6 +71,9 @@ async function draw(kind, arg) {
     return chartCard(edition, {
       image: await inlineImage(edition.entries[0].imageUrl),
       name: CHART.name,
+      // Null for an edition published before the chart decided its own lead,
+      // which draws the old list instead.
+      headline: leadHeadline(edition),
     })
   }
 

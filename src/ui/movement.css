@@ -13,7 +13,7 @@
  * resolved to nothing there — the line simply did not draw, and the only
  * thing on screen was the peak marker falling back to black.
  */
-.mv,.mv-spark,.mv-drivers,.mv-thin,.mv-conf{--mv-data:#5EC8E8;--mv-still:var(--ink-faint)}
+.mv,.mv-spark,.mv-drivers,.mv-conf{--mv-data:#5EC8E8;--mv-still:var(--ink-faint)}
 .mv{display:flex;flex-direction:column;gap:12px}
 
 .mv-says{display:flex;flex-direction:column;gap:4px}
@@ -50,13 +50,6 @@
 .mv-drivers li.still .mv-d-value{color:var(--ink-faint)}
 .mv-drivers.compact li{grid-template-columns:62px minmax(40px,1fr) auto;gap:8px}
 .mv-drivers.compact .mv-d-track{height:6px}
-
-/* ---- the honesty label ---- */
-.mv-thin{margin:0;display:flex;align-items:baseline;gap:8px;
-  font-size:13px;line-height:1.4;color:var(--ink-dim)}
-.mv-thin b{font-family:var(--mono);font-size:10px;letter-spacing:.16em;
-  text-transform:uppercase;color:var(--gold);border:1px solid var(--gold);
-  border-radius:3px;padding:2px 6px;flex:none;font-weight:400}
 
 .mv-conf{font-family:var(--mono);font-size:10px;letter-spacing:.16em;
   text-transform:uppercase;color:var(--ink-faint);

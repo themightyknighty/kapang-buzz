@@ -232,6 +232,14 @@ export function writeWeek(pick, { chartName = 'The Genie 100' } = {}) {
  * which is exactly why it travels: a trade outlet will quote a number that
  * says something about their own commissioning.
  */
+/**
+ * A signed figure, with the minus the rest of the chart uses.
+ *
+ * `-59` beside a row reading `−3` is two different characters for one idea
+ * on one page. U+2212 is the one the move column has always used.
+ */
+const signed = (n) => (n > 0 ? `+${num(n)}` : n < 0 ? `\u2212${num(Math.abs(n))}` : `${num(n)}`)
+
 export function writeGap(gap, { label = null } = {}) {
   if (!gap?.pairs?.length) return null
   const wanted = gap.publicAhead[0]
@@ -251,7 +259,7 @@ export function writeGap(gap, { label = null } = {}) {
         rows: gap.publicAhead.map((p) => ({
           name: p.displayName, slug: p.slug,
           line: `search ${num(p.searchRank)} · coverage ${num(p.pressRank)}`,
-          figure: `+${num(p.gap)}`,
+          figure: signed(p.gap),
         })),
       },
       {
@@ -260,7 +268,7 @@ export function writeGap(gap, { label = null } = {}) {
         rows: gap.pressAhead.map((p) => ({
           name: p.displayName, slug: p.slug,
           line: `coverage ${num(p.pressRank)} · search ${num(p.searchRank)}`,
-          figure: `${num(p.gap)}`,
+          figure: signed(p.gap),
         })),
       },
     ],

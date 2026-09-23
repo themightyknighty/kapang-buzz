@@ -127,6 +127,28 @@ const run = async () => {
       ],
       summary: { numberOne: { displayName: 'Jeremy Allen White' }, charted: 100 },
     })],
+    /* The production shape: the number one always has a week series, so the
+       sparkline and the headline are what a real chart card carries. */
+    ['chart-headline', chartCard({
+      id: '2026-W38',
+      label: '14–20 September 2026',
+      entries: [
+        {
+          rank: 1, displayName: 'Zendaya', slug: 'zendaya', score: 62.1, status: 'up', move: 3, weeksOn: 9, peak: 1,
+          movement: {
+            week: {
+              series: [40, 48, 61, 72, 66, 58, 62].map((level, i) => ({ day: `2026-09-${14 + i}`, level })),
+              peak: { day: '2026-09-17', level: 72 },
+            },
+            drivers: [{ label: 'search', moved: true, share: 0.6, change: 0.8 }],
+          },
+        },
+        { rank: 2, displayName: 'Pedro Pascal', slug: 'pedro-pascal', score: 58.4, status: 'down', move: -1 },
+        { rank: 3, displayName: 'Benedict Cumberbatch', slug: 'bc', score: 55.0, status: 'new', move: null },
+      ],
+      summary: { numberOne: { displayName: 'Zendaya' }, charted: 100 },
+    }, { headline: 'Zendaya takes the top' })],
+
     /* ---- the card that explains a move ---- */
     ['movement', movementCard(
       { rank: 8, displayName: 'Zendaya', slug: 'zendaya', score: 41.2 },

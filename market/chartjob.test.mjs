@@ -3,6 +3,7 @@ import assert from 'node:assert/strict'
 import { memoryBlobs, createStore, KEYS } from './store.mjs'
 import { publishChart, backfillCharts } from './chartjob.mjs'
 import { weekRange, nextWeekId } from './chart.mjs'
+import { bestsBefore } from './milestones.mjs'
 
 const DAY = 86400000
 
@@ -324,4 +325,67 @@ test('the archive carries what each week was about', async () => {
   const entry = index.editions.find((e) => e.id === '2026-W38')
   assert.ok(entry.headline, 'the archive would be a column of dates')
   assert.ok(entry.numberOne, 'and it still knows who was top')
+})
+
+/* ------------------------------------------------------------------ *
+ * The all-time records
+ * ------------------------------------------------------------------ */
+
+const WEEKS = ['2026-W34', '2026-W35', '2026-W36', '2026-W37', '2026-W38']
+
+/** Five weeks where `b` crawls up the chart and then jumps to second. */
+const fiveWeeks = () => world({
+  a: Object.fromEntries(WEEKS.map((k) => [k, 90])),
+  b: Object.fromEntries(WEEKS.map((k, i) => [k, i === WEEKS.length - 1 ? 88 : 10 + i])),
+  c: Object.fromEntries(WEEKS.map((k) => [k, 50])),
+})
+
+test('the all-time bests advance, so a record can stop being a first', async () => {
+  const w = fiveWeeks()
+  await w.ready
+  for (const id of WEEKS) await publishChart({ blobs: w.blobs, weekId: id, now: w.now })
+
+  const records = await w.store.readChartRecords()
+  /*
+   * This block had no writer at all. `nextRecords` kept each celebrity's
+   * peak and weeks on chart; the ALL-TIME half was computed by nextBests and
+   * nextBests was called by nothing, so `editions` never left zero, every
+   * record came back `young`, and the 72-100 `recordFell` rule filtered its
+   * whole candidate list out on every week for ever.
+   */
+  assert.ok(records.__bests, 'the archive keeps no all-time records at all')
+  assert.equal(records.__bests.latest, '2026-W38')
+
+  /*
+   * `young` is `bests.editions < 4`, and lead.mjs filters every young record
+   * out of `recordFell`. Stuck at zero it is not a bar that is not yet met —
+   * it is a bar that can never be met. This is the count that moves it.
+   *
+   * No assertion on __bests.climb: a move the chart marked thin is barred
+   * from setting a record by design, and rollups made of flat numbers carry
+   * nothing to corroborate a move with, so a synthetic week cannot set one.
+   * milestones.test.mjs covers which moves qualify.
+   */
+  assert.equal(bestsBefore(records).editions, WEEKS.length)
+  assert.ok(bestsBefore(records).editions >= 4, 'every record would still read as a first')
+})
+
+test('republishing a week does not count it twice', async () => {
+  const w = fiveWeeks()
+  await w.ready
+  for (const id of WEEKS) await publishChart({ blobs: w.blobs, weekId: id, now: w.now })
+  const before = await w.store.readChartRecords()
+
+  await publishChart({ blobs: w.blobs, weekId: '2026-W38', now: w.now, replace: true })
+  const after = await w.store.readChartRecords()
+
+  /*
+   * The rebuild replays BOTH halves of the file. Replaying only the
+   * per-celebrity half would hand the replacement an empty all-time block,
+   * and a re-run by hand on a Tuesday would wipe every record the archive
+   * holds and start the count again at one.
+   */
+  assert.equal(after.__bests.editions, before.__bests.editions)
+  assert.deepEqual(after.__bests, before.__bests)
+  assert.deepEqual(after.a, before.a, 'the per-celebrity half must not double-count either')
 })

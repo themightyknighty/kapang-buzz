@@ -145,7 +145,7 @@ test('the gap report leads on the widest disagreement and shows both lists', () 
   assert.match(g.standfirst, /105 names measured on both/)
   assert.equal(g.sections.length, 2)
   assert.equal(g.sections[0].rows[0].figure, '+51')
-  assert.equal(g.sections[1].rows[0].figure, '-59')
+  assert.equal(g.sections[1].rows[0].figure, '\u221259', 'the chart\u2019s minus, not a hyphen')
 })
 
 test('a half-life with too little behind it says so instead of printing an average', () => {

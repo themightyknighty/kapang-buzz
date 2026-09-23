@@ -22,6 +22,7 @@ import { CHART } from './config.mjs'
 import {
   buildChart, buildReport, leadHeadline, nextRecords, chartWeekFor, weekRange, weekIdAt, nextWeekId, previousWeekId,
 } from './chart.mjs'
+import { milestonesIn, nextBests } from './milestones.mjs'
 
 /**
  * How many earlier editions the report reads.
@@ -128,7 +129,23 @@ export async function publishChart({
   })
   const edition = { ...built, insight, report }
 
-  const result = await store.publishChart(edition, nextRecords(base, edition), {
+  /*
+   * The records file has two halves and only one of them was being written.
+   *
+   * `nextRecords` keeps each celebrity's peak and weeks on chart. `nextBests`
+   * keeps the ALL-TIME block — the biggest climb, the highest new entry, the
+   * longest reign — under a reserved key, and nothing called it. So
+   * `bestsBefore` read an empty block every week, `bests.editions` never left
+   * zero, every record came back marked `young`, and `recordFell` (the
+   * 72-100 rule, the top of the whole lead scale) filtered every candidate
+   * out. Not "not yet": never, however many years the archive ran.
+   *
+   * Milestones are found against `base` — the records as they stood BEFORE
+   * this edition — which is what the lead picker was given, so the file
+   * records exactly what the headline was picked from.
+   */
+  const found = milestonesIn({ edition, previous, records: base })
+  const result = await store.publishChart(edition, nextBests(nextRecords(base, edition), edition, { found }), {
     replace, headline: leadHeadline(edition),
   })
   log.push(
@@ -172,7 +189,18 @@ async function recordsBefore(store, id, fallback) {
   for (const entry of earlier) {
     const edition = await store.readChart(entry.id)
     if (!edition) return fallback
-    records = nextRecords(records, edition)
+    /*
+     * Both halves, in the order the original run wrote them. Replaying only
+     * the per-celebrity half would hand the replacement an empty all-time
+     * block and quietly wipe every record the archive holds.
+     *
+     * No `previous` here. It feeds the milestones array, which this discards
+     * — only the records half is folded into the bests — so leaving it out
+     * cannot change what is written, and passing the last PUBLISHED edition
+     * would misname it on any week that went unpublished.
+     */
+    const found = milestonesIn({ edition, records })
+    records = nextBests(nextRecords(records, edition), edition, { found })
   }
   return records
 }
