@@ -11,6 +11,7 @@
 import { useMemo, useState } from 'react'
 import { STATUS_TONE, CATEGORIES } from '../../market/config.mjs'
 import { SurfaceNav } from '../ui/SurfaceNav.jsx'
+import { liveWhy } from '../lib/livewhy.js'
 import { sinceLabel, signed, dirOf } from '../lib/useMarket.js'
 import { Avatar } from './Market.jsx'
 import { reasonFor, BASES, basisFor } from '../lib/movers.js'
@@ -194,6 +195,21 @@ function PortraitCredit({ row }) {
   )
 }
 
+/** The live answer to "why are they there", above the figures that say it. */
+function WhyMoving({ row }) {
+  const said = liveWhy(row)
+  if (!said.length) return null
+  return (
+    <section className="mkt-why-block" aria-label="Why they are moving">
+      <p className="mkt-why-tag">Why they are moving</p>
+      {said.map((line, i) => (
+        <p key={line} className={i === 0 ? 'lead' : undefined}>{line}</p>
+      ))}
+    </section>
+  )
+}
+
+
 export default function CelebrityDetail({ market, feed, slug }) {
   const [range, setRange] = useState(RANGES[2])
   const row = market?.rows?.find((r) => r.slug === slug)
@@ -247,6 +263,10 @@ export default function CelebrityDetail({ market, feed, slug }) {
       </header>
 
       <div className="mkt-detail">
+        {/* What is moving them, in sentences, derived from the same numbers
+            that produced the score rather than from whichever story happens
+            to mention them most recently. */}
+        <WhyMoving row={row} />
         <div className="mkt-hero">
           <div className="mkt-hero-pic">
             <Avatar row={row} big />

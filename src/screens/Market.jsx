@@ -13,6 +13,7 @@ import { useEffect, useMemo, useRef, useState } from 'react'
 import { MARKET_TABS, STATUS_TONE, CATEGORIES } from '../../market/config.mjs'
 import { filterTab } from '../../market/rank.mjs'
 import { SurfaceNav } from '../ui/SurfaceNav.jsx'
+import { liveWhyLine } from '../lib/livewhy.js'
 import { sinceLabel, signed, dirOf } from '../lib/useMarket.js'
 import { marketMovers } from '../lib/movers.js'
 import { WhyLine } from '../ui/Why.jsx'
@@ -101,7 +102,12 @@ function MoversBoard({ movers }) {
             <span className="nm">{m.name}</span>
             <span className="mv">{m.moveText}</span>
           </a>
-          <WhyLine reason={m.reason} max={150} />
+          {/* The explanation first, derived from the score. */}
+          {m.why && <p className="mkt-mv-why">{m.why}</p>}
+          {/* Then somewhere to go — but only a story we actually published.
+              "Being covered by outlet-1.test" under a heading reading "why
+              the market is moving" is not an answer to the heading. */}
+          {m.reason?.kind === 'story' && <WhyLine reason={m.reason} max={150} />}
           {/* A mover is the unit people pass on — "look who's up today" —
               so the share sits on the row, not only on the board. */}
           <Share
@@ -150,6 +156,7 @@ const COLUMNS = [
 ]
 
 function Row({ r, flash }) {
+  const why = liveWhyLine(r, { max: 78 })
   const chg = dirOf(r.change24h)
   const mom = dirOf(r.momentum)
   const move = r.isNew ? { cls: 'new', text: 'NEW' }
@@ -161,8 +168,16 @@ function Row({ r, flash }) {
       <td className="l">
         <span className="mkt-who">
           <Avatar row={r} />
-          <a href={`/market/${r.slug}`}>{r.displayName}</a>
-          <span className="mkt-cat">{CATEGORIES[r.primaryCategory]}</span>
+          <span className="mkt-who-body">
+            <span className="mkt-who-name">
+              <a href={`/market/${r.slug}`}>{r.displayName}</a>
+              <span className="mkt-cat">{CATEGORIES[r.primaryCategory]}</span>
+            </span>
+            {/* Why, not just how much. Every other column on this row is a
+                figure; this is the one that says what the figures mean, and
+                it is derived from them rather than looked up beside them. */}
+            {why && <span className="mkt-why">{why}</span>}
+          </span>
         </span>
       </td>
       <td className="mkt-score">

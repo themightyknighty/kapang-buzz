@@ -27,6 +27,8 @@ const padded = (s) => ` ${norm(s)} `
  * change and is always defined, so the board is never empty — it is just
  * measuring something coarser and says so.
  */
+import { liveWhyLine } from './livewhy.js'
+
 export const BASES = {
   day: { field: 'change24h', short: '24h', label: 'change in gossip score vs 24 hours ago', suffix: ' pts', dp: 1 },
   update: { field: 'change1h', short: 'live', label: 'change in gossip score since the last update', suffix: ' pts', dp: 1 },
@@ -150,6 +152,14 @@ export function marketMovers(market, feed, { count = 5 } = {}) {
     direction,
     status: x.row.status,
     mentions: x.row.mentions,
+    /*
+     * What moved them, derived from the same signals that produced the
+     * score. `reason` below is a STORY to go and read, which is a different
+     * job: it used to be the explanation, and with no published story it
+     * degraded to "Being covered by outlet-1.test" printed under a heading
+     * that says "why the market is moving".
+     */
+    why: liveWhyLine(x.row, { max: 150 }),
     reason: reasonFor(x.row, stories),
   })
 
