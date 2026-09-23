@@ -1,0 +1,51 @@
+/* ------------------------------------------------------------------
+   The section bar, for the surfaces that carry no app chrome.
+
+   Deliberately quieter than the header's nav: these pages lead with a
+   hundred rows of data, and a second masthead above them would compete
+   with the one thing the page is for. A rule underneath, the same
+   vocabulary as the header, and nothing else.
+
+   It scrolls sideways on a phone rather than wrapping to two rows,
+   because a nav that changes height as you move between sections makes
+   the page below it jump.
+   ------------------------------------------------------------------ */
+/* The bar sets its own measure rather than inheriting the surface's.
+   Dropped into four wrappers that disagree — .b-wrap at 1200, .ch-head at
+   1180 with a 44px gutter, .mkt at full bleed — it landed in four different
+   places, so the menu moved every time a reader changed section. It is
+   chrome: it is the thing that must not move. */
+.sn{display:flex;align-items:center;gap:20px;
+  max-width:var(--buzz-wrap);margin-inline:auto;padding:14px 20px 12px;
+  border-bottom:1px solid var(--line);margin-bottom:4px}
+
+/* Inside a wrapper that already provides the gutter, do not add a second. */
+.b-wrap > .sn{padding-left:0;padding-right:0}
+.sn-mark{line-height:0;text-decoration:none;flex:none}
+
+/* Spacing and type match `.b-nav` exactly. They are the same menu: if a
+   link is 11.5px here and 12px there, every item in the row sits somewhere
+   else the moment a reader changes section, which is the thing being fixed. */
+.sn-links{display:flex;gap:4px;align-items:center;margin-left:auto;
+  min-width:0;overflow-x:auto;scrollbar-width:none;-ms-overflow-style:none}
+.sn-links::-webkit-scrollbar{display:none}
+
+.sn-links a{font-family:var(--mono);font-size:12px;letter-spacing:.12em;
+  text-transform:uppercase;text-decoration:none;color:var(--ink-dim);
+  padding:8px 12px;border-radius:999px;white-space:nowrap}
+.sn-links a:hover{color:#fff;background:var(--deck-2)}
+
+/* Where you are. The header never marked this either, so every screen in
+   the app used to look equally like every other one. */
+.sn-links a.on{color:#fff;background:var(--deck-2)}
+.sn-links a.chart{color:var(--genie-gold)}
+.sn-links a.chart.on{background:rgba(255,193,69,.14)}
+.sn-links a.live{color:#fff;background:var(--warm-hot);display:flex;
+  align-items:center;gap:7px}
+.sn-links .dot{width:8px;height:8px;border-radius:50%;background:#fff;
+  animation:kPulse 2.2s ease-out infinite}
+
+@media(max-width:700px){
+  .sn{gap:10px;padding:12px 16px 10px}
+  .sn-links a{font-size:11px;padding:7px 10px;letter-spacing:.08em}
+}

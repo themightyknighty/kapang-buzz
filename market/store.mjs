@@ -262,7 +262,7 @@ export function createStore(blobs) {
      * `latest` only advances — republishing an old week for a backfill must
      * not put last March on the front page.
      */
-    async publishChart(edition, records, { replace = false } = {}) {
+    async publishChart(edition, records, { replace = false, headline = null } = {}) {
       const existing = await read(KEYS.chart(edition.id), null)
       if (existing && !replace) {
         return { written: false, reason: 'already published', publishedAt: existing.publishedAt }
@@ -288,6 +288,16 @@ export function createStore(blobs) {
             score: edition.summary.numberOne.score,
           }
           : null,
+        /*
+         * What that week was about, so the archive reads as a run of stories
+         * rather than a column of dates. Denormalised exactly as the number
+         * one above is: the index is a listing cache, and the alternative is
+         * reading every edition in full to draw a list of them.
+         *
+         * Handed in rather than derived here, because turning a decided lead
+         * into English is the copy layer's job and this file's job is bytes.
+         */
+        headline: headline || null,
       }
       const editions = [...index.editions.filter((e) => e.id !== edition.id), entry]
         .sort((a, b) => b.id.localeCompare(a.id))

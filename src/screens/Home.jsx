@@ -1,5 +1,7 @@
 import { useState } from 'react'
 import { STRANDS, STRAND_KEYS, DAILY_TARGET } from '../lib/strands.js'
+import { MixSliders } from '../ui/MixSliders.jsx'
+import { mixStories, normaliseMix, DEFAULT_MIX } from '../lib/mix.js'
 import { StrandBadge, StoryImage } from '../components.jsx'
 import { ago } from '../lib/time.js'
 import { loadPrefs, savePrefs } from '../lib/prefs.js'
@@ -59,9 +61,27 @@ export function StoryCard({ story, followed }) {
 export default function Home({ feed, strand }) {
   const [prefs, setPrefs] = useState(loadPrefs)
   const active = STRANDS[strand] ? strand : 'all'
-  const list = feed.stories.filter((s) => active === 'all' || s.strand === active)
+  const mix = normaliseMix(prefs.mix)
+  /*
+   * The tab is a filter and the mix is a lean, so they compose rather than
+   * compete: on one strand the tab has already answered the question and the
+   * mix has nothing left to weigh.
+   */
+  const list = active === 'all'
+    ? mixStories(feed.stories, mix)
+    : feed.stories.filter((s) => s.strand === active)
   const isFollowed = (s) => prefs.follows.includes(`strand:${s.strand}`) || (s.people || []).some((p) => prefs.follows.includes(`person:${p}`))
   const ordered = [...list.filter(isFollowed), ...list.filter((s) => !isFollowed(s))]
+
+  const setMix = (next) => {
+    const p = { ...prefs, mix: normaliseMix(next) }
+    setPrefs(p)
+    savePrefs(p)
+  }
+
+  const counts = Object.fromEntries(
+    STRAND_KEYS.map((k) => [k, feed.stories.filter((s) => s.strand === k).length]),
+  )
 
   const toggleStrand = (k) => {
     const key = `strand:${k}`
@@ -95,6 +115,11 @@ export default function Home({ feed, strand }) {
           {prefs.follows.includes(`strand:${active}`) ? '✓ Following' : '+ Follow'} {STRANDS[active].label}
         </button>
       )}
+
+      {/* Under the tabs, because the tab is the blunt question and this is
+          the one most people actually mean. Only where there is a mix to
+          make: on a single strand the tab has already decided. */}
+      {active === 'all' && <MixSliders mix={mix} onChange={setMix} counts={counts} />}
 
       <section className="b-grid">
         {ordered.map((s) => <StoryCard key={s.id} story={s} followed={isFollowed(s)} />)}

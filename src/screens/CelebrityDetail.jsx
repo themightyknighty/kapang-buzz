@@ -10,7 +10,8 @@
  */
 import { useMemo, useState } from 'react'
 import { STATUS_TONE, CATEGORIES } from '../../market/config.mjs'
-import { GenieLockup } from '../brand/Genie.jsx'
+import { SurfaceNav } from '../ui/SurfaceNav.jsx'
+import { liveWhy } from '../lib/livewhy.js'
 import { sinceLabel, signed, dirOf } from '../lib/useMarket.js'
 import { Avatar } from './Market.jsx'
 import { reasonFor, BASES, basisFor } from '../lib/movers.js'
@@ -194,6 +195,21 @@ function PortraitCredit({ row }) {
   )
 }
 
+/** The live answer to "why are they there", above the figures that say it. */
+function WhyMoving({ row }) {
+  const said = liveWhy(row)
+  if (!said.length) return null
+  return (
+    <section className="mkt-why-block" aria-label="Why they are moving">
+      <p className="mkt-why-tag">Why they are moving</p>
+      {said.map((line, i) => (
+        <p key={line} className={i === 0 ? 'lead' : undefined}>{line}</p>
+      ))}
+    </section>
+  )
+}
+
+
 export default function CelebrityDetail({ market, feed, slug }) {
   const [range, setRange] = useState(RANGES[2])
   const row = market?.rows?.find((r) => r.slug === slug)
@@ -210,6 +226,7 @@ export default function CelebrityDetail({ market, feed, slug }) {
   if (!row) {
     return (
       <div className="mkt">
+        <SurfaceNav current="market" feed={feed} market={market} />
         <div className="mkt-detail">
           <p className="mkt-thin">
             Not in the market. Gossip Genie tracks {market.summary?.tracked ?? 0} celebrities —
@@ -232,18 +249,24 @@ export default function CelebrityDetail({ market, feed, slug }) {
     <div className="mkt">
       {market.mock && <div className="mkt-mock">Mock market — synthetic data for development. Not real attention figures.</div>}
 
+      <SurfaceNav current="market" feed={feed} market={market} />
       <header className="mkt-head">
         <div className="mkt-head-top">
-          <GenieLockup descriptor="Gossip" height={26} />
           <span className="mkt-sub">Celebrity Market</span>
           <div className="mkt-head-right">
             <Share {...celebrityShare(row, moveShown(row, market?.rows))} label="Share" />
-            <a className="mkt-back" href="/market">← Market</a>
+            {/* The board is this page's parent, not its way out — the bar
+                above handles leaving. */}
+            <a className="mkt-back" href="/market">← Back to the board</a>
           </div>
         </div>
       </header>
 
       <div className="mkt-detail">
+        {/* What is moving them, in sentences, derived from the same numbers
+            that produced the score rather than from whichever story happens
+            to mention them most recently. */}
+        <WhyMoving row={row} />
         <div className="mkt-hero">
           <div className="mkt-hero-pic">
             <Avatar row={row} big />
@@ -306,7 +329,7 @@ export default function CelebrityDetail({ market, feed, slug }) {
             })}
             <p className="mkt-note">
               Each bar is the component's own 0–100 score. The weights that turn them into the
-              Gossip Score are on the <a href="/market/admin" className="mkt-back">admin panel</a>.
+              Gossip Score are on the <a href="/market/admin">admin panel</a>.
               {row.confidence < 1 && ` Scored at ${Math.round(row.confidence * 100)}% confidence — ${row.mentions} stories measured.`}
             </p>
           </section>

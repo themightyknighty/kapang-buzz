@@ -1,6 +1,7 @@
 import { useEffect } from 'react'
 import { useFeed, isStale } from './lib/useFeed.js'
 import { useRoute, navigate } from './lib/useRoute.js'
+import { sectionOf } from './lib/nav.js'
 import { Header, Footer } from './components.jsx'
 import Home from './screens/Home.jsx'
 import Story from './screens/Story.jsx'
@@ -35,22 +36,22 @@ export default function App() {
 
   // The chart is its own surface: one week, held still, with no app chrome
   // around it. It is the page most shared links point at.
-  if (route.name === 'chart') return <Chart weekId={route.arg} />
-  if (route.name === 'exchange') return <Exchange />
+  if (route.name === 'chart') return <Chart weekId={route.arg} feed={feed} market={market} />
+  if (route.name === 'exchange') return <Exchange feed={feed} market={market} />
 
   if (route.name === 'watch') return <Watch feed={feed} market={market} />
   if (route.name === 'vertical') return <Watch feed={feed} market={market} format="9x16" />
 
   let screen = null
   if (!feed) screen = <div className="b-wrap b-loading">Loading today’s stories…</div>
-  else if (route.name === 'story') screen = <Story feed={feed} id={route.arg} />
+  else if (route.name === 'story') screen = <Story feed={feed} market={market} id={route.arg} />
   else if (route.name === 'buzz') screen = <div className="b-wrap b-loading">Taking you to the Celebrity Market…</div>
   else if (route.name === 'quiz') screen = <Quiz feed={feed} />
   else screen = <Home feed={feed} strand={route.name === 'strand' ? route.arg : null} />
 
   return (
     <div className="b-app">
-      <Header feed={feed} market={market} />
+      <Header feed={feed} market={market} current={sectionOf(route.name)} />
       {isStale(feed) && (
         <div className="b-stale">Stories last updated {ago(feed.generatedAt)} — the next update is running late.</div>
       )}

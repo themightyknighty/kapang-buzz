@@ -724,7 +724,7 @@ export function marketCard(board) {
  *
  * @param {{id:string,label:string,entries:Array,summary:object}} edition
  */
-export function chartCard(edition, { image = null, name = 'The Genie 100' } = {}) {
+export function chartCard(edition, { image = null, name = 'The Genie 100', headline = null } = {}) {
   const f = loadFonts()
   const one = edition?.entries?.[0]
   if (!one) return siteCard()
@@ -776,9 +776,42 @@ export function chartCard(edition, { image = null, name = 'The Genie 100' } = {}
     }
   }
 
-  // The four behind them, small, as a list — proof of a chart.
-  let rowY = series.length >= 2 ? 474 : 348
-  for (const e of edition.entries.slice(1, series.length >= 2 ? 4 : 5)) {
+  /*
+   * What the week was about, where the also-rans used to go.
+   *
+   * The list was this card's proof that it is a chart, and the sparkline
+   * above does that job better — the comment beside it says as much. A
+   * headline says the one thing no other element on the card can: what
+   * actually happened. So when the edition has decided on one, it takes the
+   * block, and the list stays for the editions published before it did.
+   *
+   * The same block was also overflowing. Three rows under a sparkline ran to
+   * y=558 while `chrome` puts its rule at 538 and the date at 578, so the
+   * third name was printed through the rule and into the date on every card
+   * with a week series — which is every card, because the number one always
+   * has one. Two rows end at 516 and clear it.
+   */
+  const blockY = series.length >= 2 ? 474 : 348
+
+  if (headline) {
+    const said = fitLines(headline, {
+      font: f.body, sizes: [30, 27, 24], width: COL - 40, maxLines: 2, spacing: 0,
+    })
+    let hy = blockY
+    for (const line of said.lines) {
+      parts.push(text(line, { x: PAD, y: hy, font: 'body', size: said.size, fill: C.ink }))
+      hy += Math.round(said.size * 1.25)
+    }
+    parts.push(chrome({
+      f, eyebrow: name.toUpperCase(), eyebrowColor: C.gold,
+      footer: edition.label ? `week of ${edition.label.toLowerCase()}` : 'published every Monday',
+    }))
+    return frame(parts.join(''))
+  }
+
+  // The names behind them, small, as a list — proof of a chart.
+  let rowY = blockY
+  for (const e of edition.entries.slice(1, series.length >= 2 ? 3 : 5)) {
     parts.push(text(String(e.rank), { x: PAD, y: rowY, font: 'mono', size: 20, fill: C.inkFaint }))
     const [nm] = wrap(e.displayName, { font: f.body, size: 24, width: COL - 190, maxLines: 1 })
     parts.push(text(nm, { x: PAD + 46, y: rowY, font: 'body', size: 24, fill: C.inkDim }))

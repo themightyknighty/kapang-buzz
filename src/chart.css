@@ -24,13 +24,12 @@
   background:var(--abyss);min-height:100vh;padding-bottom:90px;
 }
 .ch *{font-variant-numeric:tabular-nums}
-.ch-head,.ch-one,.ch-summary,.ch-list,.ch-method,.ch-foot,.ch-notyet,.ch-note{
+.ch-head,.ch-lead,.ch-one,.ch-summary,.ch-list,.ch-reports,.ch-method,.ch-foot,.ch-notyet,.ch-note{
   max-width:var(--wrap);margin-inline:auto}
 
 /* ---------------- header ---------------- */
 .ch-head{padding:18px var(--pad) 0}
 .ch-head-row{display:flex;align-items:center;gap:16px;flex-wrap:wrap}
-.ch-mark{line-height:0;text-decoration:none;flex:none}
 .ch-title{font-family:var(--display);font-weight:400;font-size:clamp(26px,4vw,40px);
   line-height:1;margin:0;letter-spacing:.02em;color:#fff}
 .ch-head-right{margin-left:auto;display:flex;align-items:center;gap:12px}
@@ -64,6 +63,85 @@
 .cd b{color:var(--genie-gold);font-weight:400}
 .cd.done{color:var(--genie-gold)}
 
+/* ---------------- what the week was about ----------------
+
+   The lead is the headline and the number one below it is the story, so
+   it is set like a headline: display face, one size larger than anything
+   else on the page, and given the full measure rather than a column.
+
+   No box, no rule, no tint. It is the top of the page and the only thing
+   above the chart, which is all the emphasis it needs — a panel would
+   make the week's story look like an advertisement for the week's story.
+   ------------------------------------------------------------------ */
+.ch-lead{padding:clamp(20px,3.4vw,34px) var(--pad) 0}
+.ch-lead-tag{display:flex;align-items:center;gap:10px;margin:0 0 9px;
+  font-family:var(--mono);font-size:11px;letter-spacing:.24em;
+  text-transform:uppercase;color:var(--genie-gold)}
+/* The same marker the rows carry, so "thin" means one thing on this page. */
+.ch-lead-thin{font-family:var(--mono);font-size:10px;letter-spacing:.16em;
+  text-transform:uppercase;color:var(--gold);border:1px solid var(--gold);
+  border-radius:3px;padding:2px 6px;font-weight:400;flex:none}
+.ch-lead-head{margin:0;font-family:var(--display);font-weight:400;color:#fff;
+  font-size:clamp(30px,5vw,58px);line-height:1;letter-spacing:.01em;
+  max-width:20ch;text-wrap:balance}
+.ch-lead-stand{margin:12px 0 0;max-width:58ch;color:var(--ink);
+  font-size:clamp(15px,1.7vw,19px);line-height:1.45}
+.ch-lead-note{margin:7px 0 0;max-width:58ch;color:var(--ink-dim);
+  font-size:14px;line-height:1.45}
+
+/* The two stories under the lead. Side by side on a desktop and stacked on
+   a phone, which flex-basis does without a query. */
+.ch-lead-also{list-style:none;display:flex;flex-wrap:wrap;gap:12px 32px;
+  margin:18px 0 0;padding:15px 0 0;border-top:1px solid var(--line)}
+.ch-lead-also li{display:flex;flex-direction:column;gap:3px;
+  min-width:0;flex:1 1 260px}
+.ch-lead-also b{font-family:var(--mono);font-size:10px;letter-spacing:.2em;
+  text-transform:uppercase;color:var(--ink-faint);font-weight:400}
+.ch-lead-also span{color:var(--ink);font-size:15px;line-height:1.35}
+
+/* ---------------- what the archive knows ----------------
+
+   Three reports off one stored block. They are set as columns rather than
+   as a feature because they are reference, not news — somebody scans them
+   for the one figure they came for. On a phone they stack in the order
+   they are written, which is widest question first.
+   ------------------------------------------------------------------ */
+.ch-reports{padding:clamp(30px,4vw,52px) var(--pad) 0;border-top:1px solid var(--line);
+  margin-top:clamp(28px,4vw,48px)}
+.ch-reports-title{margin:0;font-family:var(--display);font-weight:400;color:#fff;
+  font-size:clamp(24px,3.2vw,38px);line-height:1;letter-spacing:.02em}
+.ch-reports-note{margin:10px 0 0;max-width:58ch;color:var(--ink-dim);
+  font-size:14px;line-height:1.5}
+.ch-reports-grid{display:grid;gap:clamp(22px,3vw,34px);margin-top:clamp(22px,3vw,32px);
+  grid-template-columns:repeat(auto-fit,minmax(280px,1fr))}
+
+.ch-report{display:flex;flex-direction:column;gap:7px;min-width:0}
+.ch-report-tag{display:flex;align-items:center;gap:8px;margin:0;
+  font-family:var(--mono);font-size:11px;letter-spacing:.22em;
+  text-transform:uppercase;color:var(--genie-gold)}
+.ch-report-early{font-family:var(--mono);font-size:9.5px;letter-spacing:.14em;
+  color:var(--ink-faint);border:1px solid var(--line);border-radius:3px;
+  padding:2px 6px;font-weight:400}
+.ch-report-head{margin:0;font-size:clamp(17px,1.9vw,21px);line-height:1.25;
+  color:#fff;font-weight:600}
+.ch-report-stand{margin:0;color:var(--ink-dim);font-size:13.5px;line-height:1.5}
+
+.ch-report-sec{margin-top:9px}
+.ch-report-sub{margin:0;font-family:var(--mono);font-size:10px;letter-spacing:.2em;
+  text-transform:uppercase;color:var(--ink-faint)}
+.ch-report-note{margin:3px 0 0;color:var(--ink-faint);font-size:12.5px;line-height:1.45}
+.ch-report-sec ul{list-style:none;margin:7px 0 0;padding:0;
+  display:flex;flex-direction:column;gap:5px}
+.ch-report-sec li{display:grid;grid-template-columns:minmax(0,1fr) auto;
+  align-items:baseline;gap:2px 12px;font-size:13.5px}
+.ch-report-sec li > a,.ch-report-name{color:var(--ink);text-decoration:none;
+  overflow:hidden;text-overflow:ellipsis;white-space:nowrap}
+.ch-report-sec li > a:hover{color:var(--genie-gold)}
+.ch-report-line{grid-column:1;font-family:var(--mono);font-size:11px;
+  color:var(--ink-faint);overflow:hidden;text-overflow:ellipsis;white-space:nowrap}
+.ch-report-sec li > b{grid-column:2;grid-row:1/3;align-self:center;
+  font-family:var(--mono);font-weight:400;font-size:14px;color:var(--bar)}
+
 /* ---------------- the name at the top ---------------- */
 .ch-one{display:grid;grid-template-columns:minmax(0,1fr) minmax(300px,470px);
   gap:clamp(24px,4vw,52px);align-items:center;padding:clamp(26px,4vw,44px) var(--pad)}
@@ -77,6 +155,8 @@
 .ch-one-name{font-family:var(--display);font-weight:400;color:#fff;text-decoration:none;
   font-size:clamp(40px,6vw,76px);line-height:.94;letter-spacing:.01em}
 .ch-one-name:hover{color:var(--genie-gold)}
+/* The headline has already said it once, at full size, a screen-inch above. */
+.ch-one-name.said{font-size:clamp(26px,3.2vw,42px);line-height:1}
 .ch-one-line{margin:2px 0 6px;font-size:clamp(14px,1.5vw,17px);color:var(--genie-pink)}
 .ch-one .why-line{margin:0 0 14px;max-width:56ch}
 
@@ -171,7 +251,7 @@
 .ch-archive a{display:flex;flex-direction:column;gap:2px;text-decoration:none;
   border:1px solid var(--line);border-radius:10px;padding:10px 13px}
 .ch-archive a:hover{border-color:var(--genie-violet)}
-.ch-archive b{font-size:14px;font-weight:600;color:var(--ink)}
+.ch-archive b{font-size:14px;font-weight:600;color:var(--ink);line-height:1.3}
 .ch-archive span{font-family:var(--mono);font-size:11px;color:var(--ink-faint)}
 .ch-archive li.on a{border-color:var(--genie-gold)}
 

@@ -7,6 +7,7 @@ import { loadPrefs, savePrefs } from '../lib/prefs.js'
 import { Share } from '../ui/Share.jsx'
 import { storyShare } from '../lib/share.js'
 import { ChartPlace } from '../ui/ChartPlace.jsx'
+import { MarketRate } from '../ui/MarketRate.jsx'
 
 function Report({ id, sample }) {
   const [state, setState] = useState('idle') // idle | open | sent | error
@@ -30,7 +31,7 @@ function Report({ id, sample }) {
   )
 }
 
-export default function Story({ feed, id }) {
+export default function Story({ feed, market = null, id }) {
   const story = feed.stories.find((s) => s.id === id)
   const [prefs, setPrefs] = useState(loadPrefs)
   if (!story) return <div className="b-wrap b-empty">That story is no longer in the feed. <a href="/">See today’s stories</a></div>
@@ -60,6 +61,9 @@ export default function Story({ feed, id }) {
           {/* The return leg: the market has always linked out to stories,
               and until now nothing linked back. */}
           <ChartPlace people={story.people} />
+          {/* The other half of the return leg: where they sit on the chart,
+              and what they are worth on the market as you read this. */}
+          <MarketRate people={story.people} market={market} />
           {story.people?.length > 0 && (
             <div className="b-people">
               {story.people.map((p) => (

@@ -5,9 +5,10 @@ import {
   chartWeekFor, publishAt, weekLabel,
   dayLevel, weekScore, buildChart, nextRecords,
   moveLabel, numberOneLine, ordinal, headline,
-  partialDay, buildLiveChart, freezeAt,
+  partialDay, buildLiveChart, freezeAt, buildReport, leadHeadline,
 } from './chart.mjs'
 import { CHART } from './config.mjs'
+import { writeWeek } from '../src/lib/reportcopy.js'
 
 const DAY = 86400000
 const at = (s) => Date.parse(s)
@@ -543,4 +544,105 @@ test('the headline names the number one and the chart', () => {
   const chart = buildChart({ weekId: '2026-W38', ...world({ a: 80 }) })
   assert.equal(headline(chart), `A is number one on ${CHART.name}`)
   assert.equal(headline(null), CHART.name)
+})
+
+/* ------------------------------------------------------------------ *
+ * What the week was about
+ * ------------------------------------------------------------------ */
+
+test('there is always a lead, including on the week nothing happened', () => {
+  // The quietest week the data can produce: no previous edition, no records,
+  // three names flat for seven days. A week with no story is still a week
+  // that has to publish, so the fallback has to carry it.
+  const w = world({ a: 80, b: 60, c: 40 })
+  const edition = buildChart({ weekId: '2026-W38', ...w })
+  const { report } = buildReport({ edition, ...w })
+
+  assert.ok(report?.lead, 'a week published with nothing to say about it')
+  assert.ok(Number.isFinite(report.lead.strength))
+  assert.ok(report.considered >= 1)
+})
+
+test('the lead comes out the other end as a sentence', () => {
+  const w37 = world({ a: 80, b: 30, c: 50 }, '2026-W37')
+  const previous = buildChart({ weekId: '2026-W37', ...w37 })
+  const records = nextRecords({}, previous)
+
+  // B goes from bottom to top, which is the week.
+  const w38 = world({ a: 55, b: 90, c: 50 }, '2026-W38')
+  const edition = buildChart({ weekId: '2026-W38', ...w38, previous, records })
+  const { report } = buildReport({ edition, previous, records, editions: [previous], ...w38 })
+
+  assert.equal(report.lead.kind, 'crown')
+  assert.equal(report.lead.entry.displayName, 'B')
+
+  const written = writeWeek(report)
+  assert.ok(written.lead.headline.includes('B'), written.lead.headline)
+  assert.ok(written.lead.standfirst.includes('A'), written.lead.standfirst)
+  assert.equal(written.weekId, '2026-W38')
+})
+
+test('the stories under the lead are about other people', () => {
+  const w37 = world({ a: 80, b: 30, c: 50, d: 20 }, '2026-W37')
+  const previous = buildChart({ weekId: '2026-W37', ...w37 })
+  const records = nextRecords({}, previous)
+
+  const w38 = world({ a: 55, b: 90, c: 50, d: 70 }, '2026-W38')
+  const edition = buildChart({ weekId: '2026-W38', ...w38, previous, records })
+  const { report } = buildReport({ edition, previous, records, editions: [previous], ...w38 })
+
+  assert.ok(report.also.length <= 2, 'a lead and two sidebars, no more')
+  for (const item of report.also) {
+    if (!item.entry || !report.lead.entry) continue
+    assert.notEqual(item.entry.id, report.lead.entry.id,
+      'the same name three times is one story with two repetitions')
+  }
+})
+
+test('a week nobody charted in has no story to tell', () => {
+  const edition = buildChart({ weekId: '2026-W38', rows: [], rollups: {} })
+  assert.deepEqual(buildReport({ edition }), { insight: null, report: null })
+  assert.deepEqual(buildReport({}), { insight: null, report: null })
+})
+
+test('the insight block is kept, because next year is what makes it worth keeping', () => {
+  const w = world({ a: 80, b: 60, c: 40 })
+  const edition = buildChart({ weekId: '2026-W38', ...w })
+  const { insight } = buildReport({ edition, ...w })
+
+  // Three of the lead rules measure this week against the range the archive
+  // has seen. They can never fire unless the figures were stored at the time.
+  assert.ok(insight.concentration)
+  assert.ok(insight.churn)
+  assert.ok(Array.isArray(insight.rivalries))
+  assert.ok(insight.at)
+})
+
+test('the running order never headlines itself', () => {
+  // A lead is a claim about a finished week. buildLiveChart runs the same
+  // builder over a week that is three days old, and a running order that
+  // headlines itself is exactly the confusion the two states exist to stop.
+  const w = world({ a: 80, b: 60 })
+  const live = buildLiveChart({ ...w, now: at('2026-09-17T12:00:00Z') })
+  assert.equal(live.report, undefined)
+  assert.equal(live.insight, undefined)
+  assert.equal(buildChart({ weekId: '2026-W38', ...w }).report, undefined)
+})
+
+test('an edition with no report is still named after its number one', () => {
+  const chart = buildChart({ weekId: '2026-W38', ...world({ a: 80 }) })
+  assert.equal(leadHeadline(chart), null)
+  assert.equal(headline(chart), `A is number one on ${CHART.name}`)
+})
+
+test('an edition with a report is named after what the week was about', () => {
+  const w = world({ a: 80, b: 60, c: 40 })
+  const built = buildChart({ weekId: '2026-W38', ...w })
+  const edition = { ...built, ...buildReport({ edition: built, ...w }) }
+
+  const said = leadHeadline(edition)
+  assert.equal(typeof said, 'string')
+  assert.ok(said.length > 0)
+  // One function, so the share preview and the archive cannot disagree.
+  assert.equal(headline(edition), said)
 })

@@ -20,8 +20,21 @@ import { createStore } from './store.mjs'
 import { pool } from './pool.mjs'
 import { CHART } from './config.mjs'
 import {
-  buildChart, nextRecords, chartWeekFor, weekRange, weekIdAt, nextWeekId, previousWeekId,
+  buildChart, buildReport, leadHeadline, nextRecords, chartWeekFor, weekRange, weekIdAt, nextWeekId, previousWeekId,
 } from './chart.mjs'
+import { milestonesIn, nextBests } from './milestones.mjs'
+
+/**
+ * How many earlier editions the report reads.
+ *
+ * The lead picker measures this week against the weeks around it — how much
+ * the chart usually churns, how concentrated attention usually is, who has
+ * been trading places with whom — and not one of those means anything from a
+ * single edition. Eight covers the widest window any rule asks for, with
+ * slack, and it is eight small reads on a job that already reads a hundred
+ * rollups.
+ */
+const REPORT_WINDOW = 8
 
 /**
  * Build and publish one week.
@@ -84,23 +97,81 @@ export async function publishChart({
    */
   const base = already ? await recordsBefore(store, id, records) : records
 
-  const edition = buildChart({
+  const built = buildChart({
     weekId: id, rows, rollups, previous, records: base, stories, size, minDays, now,
   })
 
-  if (!edition.entries.length) {
+  if (!built.entries.length) {
     log.push(`chart ${id}: nobody had ${minDays} days of data — nothing published`)
-    return { id, published: false, reason: 'no eligible entries', edition }
+    return { id, published: false, reason: 'no eligible entries', edition: built }
   }
 
-  const result = await store.publishChart(edition, nextRecords(base, edition), { replace })
+  /*
+   * What the week was ABOUT, settled before it goes out and frozen into it.
+   * An edition that publishes and says "here is the chart" is a scoreboard,
+   * and this is the difference between a scoreboard and a story.
+   *
+   * `earlier` is the weeks BEFORE this one and nothing else, which is what
+   * keeps a republish honest: it reads what the first run read and reaches
+   * the same verdict, rather than re-leading a two-year-old edition on
+   * everything that has happened since.
+   */
+  const earlier = await recentEditions(store, id)
+  const { insight, report } = buildReport({
+    edition: built,
+    previous,
+    records: base,
+    rows,
+    rollups,
+    editions: earlier,
+    history: earlier.map((e) => e.insight).filter(Boolean),
+    now,
+  })
+  const edition = { ...built, insight, report }
+
+  /*
+   * The records file has two halves and only one of them was being written.
+   *
+   * `nextRecords` keeps each celebrity's peak and weeks on chart. `nextBests`
+   * keeps the ALL-TIME block — the biggest climb, the highest new entry, the
+   * longest reign — under a reserved key, and nothing called it. So
+   * `bestsBefore` read an empty block every week, `bests.editions` never left
+   * zero, every record came back marked `young`, and `recordFell` (the
+   * 72-100 rule, the top of the whole lead scale) filtered every candidate
+   * out. Not "not yet": never, however many years the archive ran.
+   *
+   * Milestones are found against `base` — the records as they stood BEFORE
+   * this edition — which is what the lead picker was given, so the file
+   * records exactly what the headline was picked from.
+   */
+  const found = milestonesIn({ edition, previous, records: base })
+  const result = await store.publishChart(edition, nextBests(nextRecords(base, edition), edition, { found }), {
+    replace, headline: leadHeadline(edition),
+  })
   log.push(
     `chart ${id}: ${edition.summary.charted} entries`
     + `, number one ${edition.summary.numberOne?.displayName || '—'}`
     + `, ${edition.summary.newEntries} new`
+    + `${report?.lead ? `, leading on ${report.lead.kind}` : ''}`
     + `${result.replaced ? ' (replaced)' : ''}`,
   )
   return { id, published: result.written, edition, ...result }
+}
+
+/**
+ * The editions immediately before `id`, oldest first.
+ *
+ * Oldest first because rivalries read a run of weeks in order, and the run has
+ * to end with the week being published for this week's swap to count.
+ */
+async function recentEditions(store, id) {
+  const index = await store.readChartIndex()
+  const wanted = (index.editions || [])
+    .filter((e) => e.id < id)
+    .sort((a, b) => a.id.localeCompare(b.id))
+    .slice(-REPORT_WINDOW)
+  const found = await Promise.all(wanted.map((e) => store.readChart(e.id)))
+  return found.filter(Boolean)
 }
 
 /**
@@ -118,7 +189,18 @@ async function recordsBefore(store, id, fallback) {
   for (const entry of earlier) {
     const edition = await store.readChart(entry.id)
     if (!edition) return fallback
-    records = nextRecords(records, edition)
+    /*
+     * Both halves, in the order the original run wrote them. Replaying only
+     * the per-celebrity half would hand the replacement an empty all-time
+     * block and quietly wipe every record the archive holds.
+     *
+     * No `previous` here. It feeds the milestones array, which this discards
+     * — only the records half is folded into the bests — so leaving it out
+     * cannot change what is written, and passing the last PUBLISHED edition
+     * would misname it on any week that went unpublished.
+     */
+    const found = milestonesIn({ edition, records })
+    records = nextBests(nextRecords(records, edition), edition, { found })
   }
   return records
 }

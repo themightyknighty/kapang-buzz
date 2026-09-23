@@ -113,7 +113,7 @@ const edition = (over = {}) => ({
   ...over,
 })
 
-test('a chart link is titled with the number one, not the chart', () => {
+test('a chart link with no decided lead is titled with the number one', () => {
   const m = shareMeta({ name: 'chart', arg: '2026-W38' }, { edition: edition() })
   assert.equal(m.kind, 'chart')
   assert.match(m.shareTitle, /^Zendaya is number one on /)
@@ -263,4 +263,41 @@ test('the exchange has its own preview, and never a broken card', () => {
   assert.match(m.shareTitle, /Genie Exchange/)
   assert.ok(m.card, 'a preview with no card is a preview nobody clicks')
   assert.match(m.description, /fantasy money/i, 'the money is not real and the preview says so')
+})
+
+test('a chart link leads on the week\u2019s story when there is one', () => {
+  const m = shareMeta({ name: 'chart', arg: '2026-W38' }, {
+    edition: edition({
+      report: {
+        lead: {
+          kind: 'climb',
+          places: 12,
+          entry: { id: 'd', slug: 'adele', displayName: 'Adele', rank: 4, lastWeek: 16, score: 50 },
+        },
+      },
+    }),
+  })
+  assert.equal(m.shareTitle, '12 places for Adele')
+  assert.match(m.title, /14–20 September 2026/)
+  assert.match(m.description, /From 16 to 4/)
+  // The number one is context here rather than the news, and still worth a
+  // sentence because the story is about somebody else.
+  assert.match(m.description, /Zendaya is number one/)
+})
+
+test('a lead about the number one does not name them twice', () => {
+  const m = shareMeta({ name: 'chart', arg: null }, {
+    edition: edition({
+      summary: {
+        charted: 100,
+        numberOne: { id: 'a', displayName: 'Zendaya', status: 'up', lastWeek: 3, weeksAtOne: 1, score: 80 },
+      },
+      report: {
+        lead: { kind: 'numberOne', entry: { id: 'a', displayName: 'Zendaya', score: 80, weeksOn: 4, weeksAtOne: 1 } },
+      },
+    }),
+  })
+  assert.match(m.shareTitle, /Zendaya holds number one/)
+  assert.equal((m.description.match(/Zendaya/g) || []).length, 0,
+    'the headline has already named them; the blurb should move on')
 })

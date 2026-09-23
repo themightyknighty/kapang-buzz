@@ -12,7 +12,8 @@
  */
 import { BASES, basisFor, reasonFor, shortReason } from '../../src/lib/movers.js'
 import { CHART } from '../../market/config.mjs'
-import { weekLabel, numberOneLine } from '../../market/chart.mjs'
+import { weekLabel, numberOneLine, headline } from '../../market/chart.mjs'
+import { writeLead } from '../../src/lib/reportcopy.js'
 
 export const SITE = 'Gossip Genie'
 export const TAGLINE = '30 family-friendly stories a day — celebrity news, health, fantastic facts and bizarre news, with a 24/7 watch channel.'
@@ -125,8 +126,12 @@ const marketPage = (movers) => {
 /**
  * A chart edition.
  *
- * The number one goes in the title, because the number one is the news and a
- * link that says "The Genie 100" is a link nobody clicks.
+ * The week's headline goes in the title, because a link that says "The Genie
+ * 100" is a link nobody clicks — and, one level up from that, a link that
+ * says "X is number one" is the same link every Monday. The edition arrives
+ * having already decided what the week was about, so the title is that, and
+ * the number one becomes context worth a sentence only when the story is
+ * about somebody else.
  */
 const chartPage = (edition, weekId) => {
   if (!edition) {
@@ -140,17 +145,25 @@ const chartPage = (edition, weekId) => {
     }
   }
   const one = edition.summary?.numberOne
+  const said = writeLead(edition.report?.lead, { chartName: CHART.name })
+  // Both ids have to be there for this to mean anything: two undefineds are
+  // not a match, and an edition with no lead must still name its number one.
+  const leadNamesOne = Boolean(said?.subject?.id && one?.id && said.subject.id === one.id)
   const behind = (edition.entries || []).slice(1, 4).map((e) => e.displayName)
   return {
     kind: 'chart',
-    title: one
-      ? `${one.displayName} is number one on ${CHART.name} · ${edition.label}`
-      : `${CHART.name} · ${edition.label}`,
-    shareTitle: one
-      ? `${one.displayName} is number one on ${CHART.name}`
-      : `${CHART.name} · ${edition.label}`,
+    title: `${headline(edition)} · ${edition.label}`,
+    shareTitle: headline(edition),
     description: clip([
-      one ? `${numberOneLine(one)}.` : null,
+      said?.standfirst || null,
+      /*
+       * Without a decided lead the number one IS the news and gets its line.
+       * With one it is context, and saying it after a headline that already
+       * named them is the same sentence twice.
+       */
+      one && !leadNamesOne
+        ? (said ? `${one.displayName} is number one.` : `${numberOneLine(one)}.`)
+        : null,
       behind.length ? `Then ${behind.join(', ')}.` : null,
       `${edition.summary?.charted || 0} names ranked for the week of ${edition.label}.`,
     ].filter(Boolean).join(' ')),
