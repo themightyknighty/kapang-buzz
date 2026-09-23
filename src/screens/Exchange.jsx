@@ -42,7 +42,7 @@ const SORTS = [
   { key: 'listing', label: 'Since listing', of: (r) => -(r.sinceListing ?? -Infinity) },
 ]
 
-export default function Exchange() {
+export default function Exchange({ feed = null, market = null }) {
   const { board, loading, error, empty, reason } = useExchange()
   const [sort, setSort] = useState('price')
 
@@ -52,11 +52,11 @@ export default function Exchange() {
     return rows.sort((a, b) => by.of(a) - by.of(b))
   }, [board, sort])
 
-  if (loading) return <Shell><p className="xc-note">Opening the exchange…</p></Shell>
+  if (loading) return <Shell feed={feed} market={market}><p className="xc-note">Opening the exchange…</p></Shell>
 
   if (empty) {
     return (
-      <Shell>
+      <Shell feed={feed} market={market}>
         <p className="xc-note">
           {reason || 'The exchange has not opened yet.'}
         </p>
@@ -70,7 +70,7 @@ export default function Exchange() {
 
   if (error) {
     return (
-      <Shell>
+      <Shell feed={feed} market={market}>
         <p className="xc-note">The exchange is not answering.</p>
         <p className="xc-note dim">{error}</p>
       </Shell>
@@ -83,7 +83,7 @@ export default function Exchange() {
   const faller = top[top.length - 1]
 
   return (
-    <Shell settledOn={board?.settledOn} refreshedAt={board?.refreshedAt} count={names.length} moved={moved}>
+    <Shell feed={feed} market={market} settledOn={board?.settledOn} refreshedAt={board?.refreshedAt} count={names.length} moved={moved}>
       {riser && faller && (riser.change || faller.change) ? (
         <div className="xc-movers">
           <Mover row={riser} kind="up" />
@@ -116,10 +116,10 @@ export default function Exchange() {
   )
 }
 
-function Shell({ children, settledOn = null, refreshedAt = null, count = 0, moved = 0 }) {
+function Shell({ children, feed = null, market = null, settledOn = null, refreshedAt = null, count = 0, moved = 0 }) {
   return (
     <div className="b-wrap xc">
-      <SurfaceNav current="exchange" />
+      <SurfaceNav current="exchange" feed={feed} market={market} />
       <header className="xc-top">
         <h1>The Genie Exchange</h1>
         <p className="xc-sub">

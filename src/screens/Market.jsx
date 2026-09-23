@@ -250,7 +250,7 @@ export default function Market({ market, feed }) {
         </div>
       )}
 
-      <SurfaceNav current="market" />
+      <SurfaceNav current="market" feed={feed} market={market} />
       <header className="mkt-head">
         <div className="mkt-head-top">
           <h1 className="mkt-title">Celebrity Market</h1>

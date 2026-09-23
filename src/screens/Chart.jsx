@@ -27,7 +27,7 @@ import { ago } from '../lib/time.js'
  * visible at a glance, and it fills the eight hundred pixels of nothing that
  * every row used to carry on a desktop.
  */
-export default function Chart({ weekId = null }) {
+export default function Chart({ weekId = null, feed = null, market = null }) {
   const live = weekId === 'live'
   const { chart, loading, error, empty, notYet } = useChart(live ? 'live' : weekId)
   const [showArchive, setShowArchive] = useState(false)
@@ -40,13 +40,15 @@ export default function Chart({ weekId = null }) {
   const changes = useMemo(() => (live ? movesSince(chart, seen) : { moves: {}, count: 0, since: null }), [chart, seen, live])
   useEffect(() => { if (live && chart) rememberIfStale(chart, seen) }, [live, chart, seen])
 
-  if (loading) return <Shell live={live}><p className="ch-note">Loading the chart…</p></Shell>
-  if (error) return <Shell live={live}><p className="ch-note">The chart could not be loaded. {error}</p></Shell>
-  if (empty) return <Shell live={live}><NotYet info={notYet} weekId={weekId} live={live} /></Shell>
+  if (loading) return <Shell live={live} feed={feed} market={market}><p className="ch-note">Loading the chart…</p></Shell>
+  if (error) return <Shell live={live} feed={feed} market={market}><p className="ch-note">The chart could not be loaded. {error}</p></Shell>
+  if (empty) return <Shell live={live} feed={feed} market={market}><NotYet info={notYet} weekId={weekId} live={live} /></Shell>
 
   return (
     <Edition
       chart={chart}
+      feed={feed}
+      market={market}
       live={live}
       changes={changes}
       index={index}
@@ -60,7 +62,7 @@ export default function Chart({ weekId = null }) {
  * The screen
  * ------------------------------------------------------------------ */
 
-function Edition({ chart, live, changes, index, showArchive, onArchive }) {
+function Edition({ chart, live, changes, index, showArchive, onArchive, feed, market }) {
   const one = chart.entries[0]
   const rest = chart.entries.slice(1)
   const path = live ? '/chart/live' : `/chart/${chart.id}`
@@ -78,7 +80,7 @@ function Edition({ chart, live, changes, index, showArchive, onArchive }) {
 
   return (
     <div className={`ch${live ? ' live' : ''}`}>
-      <Head chart={chart} live={live} changes={changes} path={path} one={one} />
+      <Head chart={chart} live={live} changes={changes} path={path} one={one} feed={feed} market={market} />
       <LeadStory week={week} />
       {one && <NumberOne entry={one} live={live} chart={chart} named={namedInLead} />}
       <Summary chart={chart} live={live} changes={changes} />
@@ -109,55 +111,61 @@ function Edition({ chart, live, changes, index, showArchive, onArchive }) {
  * week's running order are two buttons a thumb's width apart, so nobody has
  * to work out why there appear to be two rankings.
  */
-function Head({ chart, live, changes, path, one }) {
+function Head({ chart, live, changes, path, one, feed, market }) {
   return (
-    <header className="ch-head">
-      <SurfaceNav current="chart" />
-      <div className="ch-head-row">
-        <h1 className="ch-title">{CHART.name}</h1>
-        <div className="ch-head-right">
-          <Share
-            title={one
-              ? `${one.displayName} is ${live ? 'leading' : 'number one on'} ${CHART.name}`
-              : CHART.name}
-            text={live
-              ? `${chart.daysCounted} days into the week, with the chart freezing on Monday.`
-              : `${chart.label} · ${chart.summary.charted} names ranked by how loudly the world is talking.`}
-            path={path}
-            label="Share"
-          />
+    <>
+      {/* Outside `ch-head` on purpose: that block is the chart's own
+          measure, narrower than the rest of the app, and the bar has to
+          sit in the same place on every screen rather than in each
+          screen's own. */}
+      <SurfaceNav current="chart" feed={feed} market={market} />
+      <header className="ch-head">
+        <div className="ch-head-row">
+          <h1 className="ch-title">{CHART.name}</h1>
+          <div className="ch-head-right">
+            <Share
+              title={one
+                ? `${one.displayName} is ${live ? 'leading' : 'number one on'} ${CHART.name}`
+                : CHART.name}
+              text={live
+                ? `${chart.daysCounted} days into the week, with the chart freezing on Monday.`
+                : `${chart.label} · ${chart.summary.charted} names ranked by how loudly the world is talking.`}
+              path={path}
+              label="Share"
+            />
+          </div>
         </div>
-      </div>
 
-      <nav className="ch-states" aria-label="Which chart">
-        <a href="/chart/live" className={live ? 'on' : ''}>
-          <b>This week so far</b>
-          <span>live · provisional</span>
-        </a>
-        <a href="/chart" className={live ? '' : 'on'}>
-          <b>Last week’s chart</b>
-          <span>published · final</span>
-        </a>
-      </nav>
+        <nav className="ch-states" aria-label="Which chart">
+          <a href="/chart/live" className={live ? 'on' : ''}>
+            <b>This week so far</b>
+            <span>live · provisional</span>
+          </a>
+          <a href="/chart" className={live ? '' : 'on'}>
+            <b>Last week’s chart</b>
+            <span>published · final</span>
+          </a>
+        </nav>
 
-      <div className="ch-week">
-        <b>{chart.label}</b>
-        {live ? (
-          <>
-            <span>{chart.daysCounted} of 7 days counted</span>
-            <Countdown at={chart.freezesAt} label="Freezes in" onDone="Freezing — the edition is being written" />
-            {changes.count > 0 && (
-              <span className="ch-moved">{changes.count} {changes.count === 1 ? 'name has' : 'names have'} moved since you last looked</span>
-            )}
-          </>
-        ) : (
-          <>
-            <span>published {ago(chart.publishedAt)}</span>
-            {chart.provisional && <span className="ch-flag">built on {chart.minDays} days</span>}
-          </>
-        )}
-      </div>
-    </header>
+        <div className="ch-week">
+          <b>{chart.label}</b>
+          {live ? (
+            <>
+              <span>{chart.daysCounted} of 7 days counted</span>
+              <Countdown at={chart.freezesAt} label="Freezes in" onDone="Freezing — the edition is being written" />
+              {changes.count > 0 && (
+                <span className="ch-moved">{changes.count} {changes.count === 1 ? 'name has' : 'names have'} moved since you last looked</span>
+              )}
+            </>
+          ) : (
+            <>
+              <span>published {ago(chart.publishedAt)}</span>
+              {chart.provisional && <span className="ch-flag">built on {chart.minDays} days</span>}
+            </>
+          )}
+        </div>
+      </header>
+    </>
   )
 }
 
@@ -512,10 +520,10 @@ function NotYet({ info, weekId, live }) {
   )
 }
 
-const Shell = ({ children, live }) => (
+const Shell = ({ children, live, feed = null, market = null }) => (
   <div className={`ch${live ? ' live' : ''}`}>
+    <SurfaceNav current="chart" feed={feed} market={market} />
     <header className="ch-head">
-      <SurfaceNav current="chart" />
       <div className="ch-head-row">
         <h1 className="ch-title">{CHART.name}</h1>
       </div>

@@ -1,5 +1,6 @@
 import { NAV } from '../lib/nav.js'
 import { GenieLockup } from '../brand/Genie.jsx'
+import { Notices } from './Notices.jsx'
 import './surfacenav.css'
 
 /**
@@ -18,7 +19,7 @@ import './surfacenav.css'
  * block, and it sits inside whatever wrapper the surface already uses, so it
  * inherits that page's measure instead of arguing with it.
  */
-export function SurfaceNav({ current = null }) {
+export function SurfaceNav({ current = null, feed = null, market = null }) {
   return (
     <nav className="sn" aria-label="Sections">
       <a href="/" className="sn-mark" aria-label="Gossip Genie home">
@@ -38,6 +39,11 @@ export function SurfaceNav({ current = null }) {
           </a>
         ))}
       </div>
+      {/* The bell comes too. It used to exist only where the header did, so
+          a reader on the chart or the market could not see an alert at all —
+          and, because it sits to the right of the links, its absence moved
+          the whole menu 56px between one section and the next. */}
+      <Notices feed={feed} market={market} />
     </nav>
   )
 }

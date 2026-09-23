@@ -36,8 +36,8 @@ export default function App() {
 
   // The chart is its own surface: one week, held still, with no app chrome
   // around it. It is the page most shared links point at.
-  if (route.name === 'chart') return <Chart weekId={route.arg} />
-  if (route.name === 'exchange') return <Exchange />
+  if (route.name === 'chart') return <Chart weekId={route.arg} feed={feed} market={market} />
+  if (route.name === 'exchange') return <Exchange feed={feed} market={market} />
 
   if (route.name === 'watch') return <Watch feed={feed} market={market} />
   if (route.name === 'vertical') return <Watch feed={feed} market={market} format="9x16" />

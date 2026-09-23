@@ -210,7 +210,7 @@ export default function CelebrityDetail({ market, feed, slug }) {
   if (!row) {
     return (
       <div className="mkt">
-        <SurfaceNav current="market" />
+        <SurfaceNav current="market" feed={feed} market={market} />
         <div className="mkt-detail">
           <p className="mkt-thin">
             Not in the market. Gossip Genie tracks {market.summary?.tracked ?? 0} celebrities —
@@ -233,7 +233,7 @@ export default function CelebrityDetail({ market, feed, slug }) {
     <div className="mkt">
       {market.mock && <div className="mkt-mock">Mock market — synthetic data for development. Not real attention figures.</div>}
 
-      <SurfaceNav current="market" />
+      <SurfaceNav current="market" feed={feed} market={market} />
       <header className="mkt-head">
         <div className="mkt-head-top">
           <span className="mkt-sub">Celebrity Market</span>
