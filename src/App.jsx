@@ -44,7 +44,7 @@ export default function App() {
 
   let screen = null
   if (!feed) screen = <div className="b-wrap b-loading">Loading today’s stories…</div>
-  else if (route.name === 'story') screen = <Story feed={feed} id={route.arg} />
+  else if (route.name === 'story') screen = <Story feed={feed} market={market} id={route.arg} />
   else if (route.name === 'buzz') screen = <div className="b-wrap b-loading">Taking you to the Celebrity Market…</div>
   else if (route.name === 'quiz') screen = <Quiz feed={feed} />
   else screen = <Home feed={feed} strand={route.name === 'strand' ? route.arg : null} />

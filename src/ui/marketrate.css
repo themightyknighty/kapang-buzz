@@ -1,0 +1,24 @@
+/* ------------------------------------------------------------------
+   What the people in a story are worth.
+
+   Sits with `b-place` (where they sit on the chart) as the other half
+   of the return leg: the market has always linked out to stories, and
+   these are what link back. Same chip shape, so a reader learns one.
+   ------------------------------------------------------------------ */
+.b-rate{display:flex;align-items:center;gap:8px;flex-wrap:wrap;margin:14px 0 0}
+.b-rate-label{font-family:var(--mono);font-size:10px;letter-spacing:.2em;
+  text-transform:uppercase;color:var(--ink-faint)}
+.b-rate-chip{display:inline-flex;align-items:baseline;gap:8px;text-decoration:none;
+  border:1px solid var(--line);border-radius:999px;padding:5px 12px;
+  background:var(--deck);white-space:nowrap}
+.b-rate-chip:hover{border-color:var(--genie-violet)}
+.b-rate-chip .nm{color:var(--ink);font-size:13px}
+/* The score is the figure every other surface prints, so it is the bold one. */
+.b-rate-chip b{font-family:var(--mono);font-weight:400;font-size:13px;color:#fff}
+.b-rate-chip i{font-family:var(--mono);font-style:normal;font-size:11px}
+.b-rate-chip i.up{color:var(--up,#3DDC97)}
+.b-rate-chip i.down{color:var(--down,#FF5A6E)}
+/* Fantasy money, and set quieter than the score so it cannot be mistaken
+   for the measurement. */
+.b-rate-chip em{font-family:var(--mono);font-style:normal;font-size:11px;
+  color:var(--genie-gold)}

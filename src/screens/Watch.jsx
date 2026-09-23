@@ -36,6 +36,8 @@ import { useChart } from '../lib/useChart.js'
 import { moveLabel, numberOneLine } from '../../market/chart.mjs'
 import { Sparkline } from '../ui/Movement.jsx'
 import { whyLine, shapeLine, thinLine, rowLine } from '../lib/narrative.js'
+import { usePriceBoard } from '../lib/usePriceBoard.js'
+import { ratesFor, priceLabel, scoreLabel } from '../lib/rates.js'
 import { formatFor } from '../lib/format.js'
 import { joinAt, livePosition, storyIdsIn } from '../lib/showclock.js'
 import { loadWatched, saveWatched, markWatched, seenSet, clearWatched } from '../lib/watched.js'
@@ -369,9 +371,10 @@ function BuzzMeter({ outlets = 1, t }) {
 }
 
 /* ---------------- segments ---------------- */
-function StorySeg({ seg, t }) {
+function StorySeg({ seg, t, market = null }) {
   const { story } = seg
   const s = STRANDS[story.strand]
+  const board = usePriceBoard()
   const tags = [{ label: s.label }]
   if (seg.justIn) tags.unshift({ label: 'Just in', live: true })
   if (seg.type === 'top') tags.unshift({ label: 'Top story', live: true })
@@ -380,6 +383,25 @@ function StorySeg({ seg, t }) {
     { k: 'Updated', v: ago(story.publishedAt) },
   ]
   if (story.bigNumber?.value && story.image?.url) stats.unshift({ k: story.bigNumber.label, v: story.bigNumber.value, tone: 'warm' })
+
+  /*
+   * What the name on screen is worth, as you hear it.
+   *
+   * The channel says a celebrity's name and says nothing about where they
+   * stand, which is the one thing this show has that a news bulletin does
+   * not. The highest-scoring tracked name takes the slot — a lower third has
+   * room for one, and three people's figures on a strap is a table.
+   *
+   * Capped at three stats in total because this is a fixed pixel canvas: a
+   * fourth is what pushes the strap off the bottom of a 1080 frame, and the
+   * audits catch that only if somebody runs them.
+   */
+  const rate = ratesFor(story.people, { market, board })
+    .sort((a, b) => (b.score ?? 0) - (a.score ?? 0))[0]
+  if (rate && stats.length < 3) {
+    const price = priceLabel(rate)
+    stats.push({ k: 'On the market', v: `${rate.displayName} ${scoreLabel(rate)}${price ? ` · ${price}` : ''}` })
+  }
   return (
     <div className="w-seg-story" style={{ '--strand': s.color }}>
       <Hero story={story} t={t} dur={seg.dur} />
@@ -849,7 +871,7 @@ const CHAT_LINES = {
   comingUp: '👉 Follow for more Gossip Genie',
 }
 
-function Segment({ seg, paused, format, startAt = 0 }) {
+function Segment({ seg, paused, format, startAt = 0, market = null }) {
   /*
    * The animation clock is given the same offset as the end timer.
    *
@@ -865,18 +887,18 @@ function Segment({ seg, paused, format, startAt = 0 }) {
     return (
       <>
         <VFx />
-        <PanelSegment seg={seg} t={t} format={format} />
+        <PanelSegment seg={seg} t={t} format={format} market={market} />
         {CHAT_LINES[seg.type] && <div className="v-chatpill">{seg.type === 'quiz' && !seg.question ? '💬 Comment TRUE or FALSE now!' : CHAT_LINES[seg.type]}</div>}
       </>
     )
   }
-  return <PanelSegment seg={seg} t={t} format={format} />
+  return <PanelSegment seg={seg} t={t} format={format} market={market} />
 }
 
-function PanelSegment({ seg, t, format }) {
+function PanelSegment({ seg, t, format, market = null }) {
   switch (seg.type) {
     case 'headlines': return <HeadlinesSeg seg={seg} t={t} format={format} />
-    case 'top': case 'story': return <StorySeg seg={seg} t={t} />
+    case 'top': case 'story': return <StorySeg seg={seg} t={t} market={market} />
     case 'weird': return <WeirdSeg seg={seg} t={t} />
     case 'open': return <OpenSeg seg={seg} t={t} />
     case 'chartPos': return <ChartPosSeg seg={seg} t={t} />
@@ -1205,7 +1227,7 @@ export default function Watch({ feed, market, format = 'auto' }) {
         style={{ width: F.w, height: F.h, transform: `translate(-50%, -50%) scale(${scale})` }}
       >
         {!seg && <div className="w-empty"><div className="w-brand big"><GenieLockup descriptor="Gossip" height={180} /></div><p>Tuning in…</p></div>}
-        {seg && <Segment key={seg.key} seg={seg} paused={wiping || paused} format={shape} startAt={into} />}
+        {seg && <Segment key={seg.key} seg={seg} paused={wiping || paused} format={shape} startAt={into} market={market} />}
         <TopBar seg={seg} />
         {segs.length > 0 && <Tape segs={segs} idx={idx} movers={movers} />}
 
