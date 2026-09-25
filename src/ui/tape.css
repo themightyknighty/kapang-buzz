@@ -6,12 +6,15 @@
    the same thing six inches apart.
 
    The loop works by translating a duplicated run exactly -50%. Any other
-   distance shows a seam. The duration scales with the number of items so
-   a long board does not scroll faster than a short one.
+   distance shows a seam.
+
+   The duration is set from JS, measured off the run's real width, so the
+   tape holds a constant reading speed whatever the board's length. The
+   value here is only the fallback for the frame before measurement.
    ------------------------------------------------------------------ */
 .tp{position:relative;overflow:hidden;border-block:1px solid var(--line);
   background:linear-gradient(180deg,var(--deck),var(--abyss));
-  padding:9px 0;margin:0 0 4px;--tp-secs:80s}
+  padding:9px 0;margin:0 0 4px;--tp-secs:300s}
 /* The ends fade rather than cut, so a quote does not appear to be sliced
    in half by the window edge. */
 .tp::before,.tp::after{content:'';position:absolute;top:0;bottom:0;width:56px;z-index:2;
