@@ -75,6 +75,42 @@ const localChart = () => {
 }
 
 /**
+ * In dev, /api/exchange serves the board `node scripts/exchange-local.mjs`
+ * wrote to .market-data/prices/.
+ *
+ * There was no handler at all, so the exchange screen on a laptop could only
+ * ever show "The exchange is not answering" — the one screen in the app whose
+ * whole claim is that it is live was the one screen nobody could look at.
+ */
+const localExchange = () => {
+  const read = async (path) => readFile(new URL(path, import.meta.url), 'utf8')
+  const handler = async (req, res) => {
+    res.setHeader('Content-Type', 'application/json')
+    const arg = (req.url || '/').replace(/^\/+|\/+$/g, '').split('?')[0]
+    try {
+      const board = JSON.parse(await read('./.market-data/prices/board.json'))
+      if (!arg) { res.end(JSON.stringify(board)); return }
+      // One name's book, the way /api/exchange/:slug answers in production.
+      const row = (board.names || []).find((n) => n.slug === arg || n.id === arg)
+      if (!row) { res.statusCode = 404; res.end(JSON.stringify({ error: 'not listed', slug: arg })); return }
+      const book = JSON.parse(await read(`./.market-data/prices/${row.id}.json`).catch(() => '{}'))
+      res.end(JSON.stringify({ ...row, book: book.days || [] }))
+    } catch {
+      res.end(JSON.stringify({
+        empty: true,
+        reason: 'No local board — try: npm run market:mock && node scripts/exchange-local.mjs',
+        names: [],
+      }))
+    }
+  }
+  return {
+    name: 'local-exchange',
+    configureServer(server) { server.middlewares.use('/api/exchange', handler) },
+    configurePreviewServer(server) { server.middlewares.use('/api/exchange', handler) },
+  }
+}
+
+/**
  * In dev, /og/*.png draws the real share cards from the local data.
  *
  * The chart screen shows the card on the page now — it is the thing people
@@ -155,7 +191,7 @@ const siteUrl = () => ({
 })
 
 export default defineConfig({
-  plugins: [react(), siteUrl(), localFeed(), localMarket(), localChart(), localCards()],
+  plugins: [react(), siteUrl(), localFeed(), localMarket(), localChart(), localExchange(), localCards()],
   build: {
     outDir: 'dist',
     assetsInlineLimit: (file) => /kapang-logo\.webp$/.test(file),

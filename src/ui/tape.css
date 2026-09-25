@@ -1,0 +1,48 @@
+/* ------------------------------------------------------------------
+   The ticker tape.
+
+   Set as instrumentation, not decoration: mono, small, one rule above
+   and below, and the same up/down pair the board uses so a colour means
+   the same thing six inches apart.
+
+   The loop works by translating a duplicated run exactly -50%. Any other
+   distance shows a seam.
+
+   The duration is set from JS, measured off the run's real width, so the
+   tape holds a constant reading speed whatever the board's length. The
+   value here is only the fallback for the frame before measurement.
+   ------------------------------------------------------------------ */
+.tp{position:relative;overflow:hidden;border-block:1px solid var(--line);
+  background:linear-gradient(180deg,var(--deck),var(--abyss));
+  padding:9px 0;margin:0 0 4px;--tp-secs:300s}
+/* The ends fade rather than cut, so a quote does not appear to be sliced
+   in half by the window edge. */
+.tp::before,.tp::after{content:'';position:absolute;top:0;bottom:0;width:56px;z-index:2;
+  pointer-events:none}
+.tp::before{left:0;background:linear-gradient(90deg,var(--abyss),transparent)}
+.tp::after{right:0;background:linear-gradient(270deg,var(--abyss),transparent)}
+
+.tp-run{display:flex;width:max-content;animation:tpRun var(--tp-secs) linear infinite}
+.tp-half{display:flex;align-items:center}
+.tp:hover .tp-run,.tp:focus-within .tp-run{animation-play-state:paused}
+
+.tp-item{display:inline-flex;align-items:baseline;gap:8px;padding:0 18px;
+  font-family:var(--mono);font-size:12px;white-space:nowrap;
+  border-right:1px solid var(--line)}
+.tp-item b{font-weight:400;color:var(--ink);letter-spacing:.04em}
+.tp-item .tp-v{color:#fff}
+.tp-item i{font-style:normal}
+.tp-item.up i{color:var(--up,#3DA5D9)}
+.tp-item.down i{color:var(--down,#FF6B35)}
+.tp-item.flat i{color:var(--ink-faint)}
+
+@keyframes tpRun{from{transform:translateX(0)}to{transform:translateX(-50%)}}
+
+/* A scrolling band is the single worst offender for anybody who has asked
+   the system to stop things moving, so it stops completely. The quotes are
+   all still there to be read. */
+@media (prefers-reduced-motion:reduce){
+  .tp-run{animation:none;flex-wrap:wrap;width:auto}
+  .tp-half:nth-child(2){display:none}
+  .tp{overflow:auto}
+}
