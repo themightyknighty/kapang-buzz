@@ -550,7 +550,7 @@ async function writeLiveChart(store, { rows, histories, now, log }) {
  * deploy rather than at three the following morning, which is the
  * difference between something to look at and something to wait for.
  */
-async function refreshBoard(store, { rows = [], histories = new Map(), now = Date.now(), log = [] } = {}) {
+export async function refreshBoard(store, { rows = [], histories = new Map(), now = Date.now(), log = [] } = {}) {
   let board = await store.readPriceBoard()
   if (!board?.names?.length) {
     /*
@@ -620,7 +620,7 @@ export async function runDaily({ blobs, now = Date.now(), fetchImpl = fetch, ros
  * The board is a single snapshot so the exchange page is one read rather
  * than a hundred, the same trick `charts/latest.json` plays for the chart.
  */
-async function settlePrices(store, { rows = [], upTo, log = [] } = {}) {
+export async function settlePrices(store, { rows = [], upTo, log = [] } = {}) {
   const board = []
   let added = 0
 
